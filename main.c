@@ -3,11 +3,11 @@
 #include <string.h>
 #include <conio.h>
 #include <windows.h>
+#include "syntax.h"
 
 #define MAX_LINES 10000
 #define MAX_LINE_LENGTH 1000
-#define MAX_SYNTAX_RULES 100
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MIN(a, b) ((size_t)(a) < (size_t)(b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MAX_CLIPBOARD_SIZE 10000
 
@@ -25,15 +25,6 @@ int clipboard_size = 0;
 HANDLE hConsole;
 COORD cursorPosition;
 CONSOLE_SCREEN_BUFFER_INFO csbi;
-
-// Syntax highlighting rules
-typedef struct {
-    char* keyword;
-    int color;
-} SyntaxRule;
-
-SyntaxRule syntax_rules[MAX_SYNTAX_RULES];
-int syntax_rules_count = 0;
 
 void init_console() {
     hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -77,20 +68,46 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
     // Apply syntax highlighting rules for comments
     i = 0;
     while (i < line_len) {
-        if (line[i] == '/' && i + 1 < line_len && line[i + 1] == '/') {
-            // Single-line comment
-            int start = i;
+        // Single-line comments (C, C++, Java, JavaScript, Python, Ruby, Perl, Haskell)
+        if (line[i] == '/' && i + 1 < line_len && (line[i + 1] == '/' || line[i + 1] == '*')) {
+            // C, C++, Java, JavaScript (// and /* ... */)
+            if (line[i + 1] == '/') {
+                //int start = i;
+                while (i < line_len) {
+                    buffer[row * screen_width + start_col + i].Attributes = 8; // Dark gray for single-line comments
+                    i++;
+                }
+            } else if (line[i + 1] == '*') {
+                // Multi-line comment (C, C++, Java, JavaScript)
+                //int start = i;
+                i += 2; // Skip "/*"
+                while (i < line_len) {
+                    if (line[i] == '*' && i + 1 < line_len && line[i + 1] == '/') {
+                        i += 2; // Skip "*/"
+                        break;
+                    }
+                    buffer[row * screen_width + start_col + i].Attributes = 8; // Dark gray for multi-line comments
+                    i++;
+                }
+                if (i == line_len) {
+                    // Handle case where comment goes to the end of the line
+                    buffer[row * screen_width + start_col + line_len - 1].Attributes = 8;
+                }
+            }
+        } else if (line[i] == '#' && (i == 0 || line[i - 1] == ' ')) {
+            // Single-line comments (Python, Ruby, Perl)
+            //int start = i;
             while (i < line_len) {
                 buffer[row * screen_width + start_col + i].Attributes = 8; // Dark gray for single-line comments
                 i++;
             }
-        } else if (line[i] == '/' && i + 1 < line_len && line[i + 1] == '*') {
-            // Multi-line comment
-            int start = i;
-            i += 2; // Skip "/*"
+        } else if (line[i] == '<' && i + 3 < line_len && line[i + 1] == '!' && line[i + 2] == '-' && line[i + 3] == '-') {
+            // HTML/JavaScript/Java multi-line comment
+            //int start = i;
+            i += 4; // Skip "<!--"
             while (i < line_len) {
-                if (line[i] == '*' && i + 1 < line_len && line[i + 1] == '/') {
-                    i += 2; // Skip "*/"
+                if (line[i] == '-' && i + 2 < line_len && line[i + 1] == '-' && line[i + 2] == '>') {
+                    i += 3; // Skip "-->"
                     break;
                 }
                 buffer[row * screen_width + start_col + i].Attributes = 8; // Dark gray for multi-line comments
@@ -99,6 +116,13 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
             if (i == line_len) {
                 // Handle case where comment goes to the end of the line
                 buffer[row * screen_width + start_col + line_len - 1].Attributes = 8;
+            }
+        } else if (line[i] == '-' && i + 1 < line_len && line[i + 1] == '-') {
+            // Haskell single-line comment
+            //int start = i;
+            while (i < line_len) {
+                buffer[row * screen_width + start_col + i].Attributes = 8; // Dark gray for single-line comments
+                i++;
             }
         } else {
             i++;
@@ -390,123 +414,6 @@ void clear_console() {
     SetConsoleCursorPosition(hConsole, coordScreen);
 }
 
-void add_syntax_rule(const char* keyword, int color) {
-    if (syntax_rules_count < MAX_SYNTAX_RULES) {
-        syntax_rules[syntax_rules_count].keyword = strdup(keyword);
-        syntax_rules[syntax_rules_count].color = color;
-        syntax_rules_count++;
-    }
-}
-
-void add_syntax_rules() {
-    // Цвета для подсветки
-    int color_keyword = 10;  // Зеленый
-    int color_function = 14; // Светло-синий
-    int color_string = 12;   // Красный
-    int color_number = 11;   // Светло-голубой
-    int color_comment = 8;   // Темно-серый
-    int color_header = 9;    // Светло-зеленый для заголовочных файлов
-    int color_include = 13;  // Цвет для #include
-
-    // Ключевые слова и их цвет для подсветки
-    const char* keywords[] = {
-        "int", "return", "for", "while", "if", "else", "class",
-        "public", "private", "protected", "struct", "namespace",
-        "template", "void", "static", "auto", "const", "sizeof",
-        "true", "false", "NULL", "break", "continue", "switch",
-        "case", "default", "typedef", "volatile", "extern",
-        "register", "union", "goto", "long", "short", "char",
-        "float", "double", "unsigned", "signed"
-    };
-
-    // Функции и их цвет для подсветки
-    const char* functions[] = {
-        // Функции из <stdio.h>
-        "printf", "scanf", "fprintf", "fscanf", "sprintf", "sscanf",
-        "fopen", "fclose", "fgets", "fputs", "fread", "fwrite",
-        "fflush", "fseek", "ftell", "rewind",
-
-        // Функции из <stdlib.h>
-        "malloc", "calloc", "realloc", "free", "exit", "atexit", "abs",
-        "rand", "srand",
-
-        // Функции из <string.h>
-        "strlen", "strcpy", "strncpy", "strcat", "strncat", "strcmp",
-        "strncmp", "strchr", "strrchr", "strstr", "memcpy", "memmove",
-        "memcmp", "memset",
-
-        // Функции из <ctype.h>
-        "isdigit", "isalpha", "islower", "isupper", "tolower", "toupper",
-
-        // Функции из <math.h>
-        "sin", "cos", "tan", "sqrt", "pow", "log", "exp",
-
-        // Функции из <iostream> (C++)
-        "std::cout", "cout", "std::cin", "cin", "std::cerr", "cerr", "std::clog", "clog",
-
-        // Функции из <fstream> (C++)
-        "std::ifstream", "ifstream", "std::ofstream", "ofstream", "std::fstream", "fstream",
-
-        // Функции из <sstream> (C++)
-        "std::stringstream", "stringstream",
-
-        // Функции из <vector> (C++)
-        "std::vector", "vector",
-
-        // Функции из <map> (C++)
-        "std::map", "map",
-
-        // Функции из <set> (C++)
-        "std::set", "set",
-
-        // Функции из <list> (C++)
-        "std::list", "list",
-
-        // Функции из <algorithm> (C++)
-        "std::sort", "sort", "std::find", "find",
-
-        // Функции из <thread> (C++)
-        "std::thread", "thread",
-
-        // Функции из <mutex> (C++)
-        "std::mutex", "mutex",
-
-        // Дополнительные функции
-        // "new_function1", "new_function2" // Добавьте свои функции сюда
-    };
-
-    // Заголовочные файлы и их цвет для подсветки
-    const char* headers[] = {
-        "<stdio.h>", "<stdlib.h>", "<string.h>", "<conio.h>", "<windows.h>",
-        "<iostream>", "<fstream>", "<sstream>", "<vector>", "<map>",
-        "<set>", "<list>", "<algorithm>", "<cassert>", "<cctype>",
-        "<cfloat>", "<climits>", "<cstdarg>", "<cstddef>", "<cstdio>",
-        "<cstdlib>", "<cstring>", "<cwchar>", "<cwctype>", "<locale>",
-        "<new>", "<typeinfo>", "<utility>", "<bitset>", "<complex>",
-        "<exception>", "<functional>", "<future>", "<initializer_list>",
-        "<iterator>", "<mutex>", "<random>", "<ratio>", "<regex>",
-        "<system_error>", "<thread>", "<tuple>", "<typeindex>", "<utility>"
-    };
-
-    // Добавление ключевых слов
-    for (int i = 0; i < sizeof(keywords) / sizeof(keywords[0]); ++i) {
-        add_syntax_rule(keywords[i], color_keyword);
-    }
-
-    // Добавление функций
-    for (int i = 0; i < sizeof(functions) / sizeof(functions[0]); ++i) {
-        add_syntax_rule(functions[i], color_function);
-    }
-
-    // Добавление заголовочных файлов
-    for (int i = 0; i < sizeof(headers) / sizeof(headers[0]); ++i) {
-        add_syntax_rule(headers[i], color_header);
-    }
-
-    // Добавление строки включения заголовочных файлов
-    add_syntax_rule("#include", color_include);
-}
-
 int main(int argc, char* argv[]) {
     if (argc != 2) {
         printf("Usage: %s <filename>\n", argv[0]);
@@ -517,9 +424,70 @@ int main(int argc, char* argv[]) {
     get_console_size();
     clear_console(); // Clear console on startup
 
-    // Define syntax rules
-    add_syntax_rules(); // Добавить синтаксические правила
+	// Определение расширения файла
+	char* filename = argv[1];
+	char* extension = strrchr(filename, '.');
 
+	if (extension) {
+		if (strcmp(extension, ".c") == 0 || strcmp(extension, ".cpp") == 0) {
+			add_syntax_rules_c_and_cpp(); // Добавить правила для C/C++
+		} else if (strcmp(extension, ".py") == 0) {
+			add_syntax_rules_python(); // Добавить правила для Python
+		} else if (strcmp(extension, ".rb") == 0) {
+			add_syntax_rules_ruby(); // Добавить правила для Ruby
+		} else if (strcmp(extension, ".js") == 0) {
+			add_syntax_rules_javascript(); // Добавить правила для JavaScript
+		} else if (strcmp(extension, ".java") == 0) {
+			add_syntax_rules_java(); // Добавить правила для Java
+		} else if (strcmp(extension, ".php") == 0) {
+			add_syntax_rules_php(); // Добавить правила для PHP
+		} else if (strcmp(extension, ".kt") == 0) {
+			add_syntax_rules_kotlin(); // Добавить правила для Kotlin
+		} else if (strcmp(extension, ".rs") == 0) {
+			add_syntax_rules_rust(); // Добавить правила для Rust
+		} else if (strcmp(extension, ".swift") == 0) {
+			add_syntax_rules_swift(); // Добавить правила для Swift
+		} else if (strcmp(extension, ".pl") == 0) {
+			add_syntax_rules_perl(); // Добавить правила для Perl
+		} else if (strcmp(extension, ".hs") == 0) {
+			add_syntax_rules_haskell(); // Добавить правила для Haskell
+		} else if (strcmp(extension, ".go") == 0) {
+			add_syntax_rules_go(); // Добавить правила для Go
+		} else if (strcmp(extension, ".ts") == 0) {
+			add_syntax_rules_typescript(); // Добавить правила для TypeScript
+		} else if (strcmp(extension, ".scala") == 0) {
+			add_syntax_rules_scala(); // Добавить правила для Scala
+		} else if (strcmp(extension, ".lua") == 0) {
+			add_syntax_rules_lua(); // Добавить правила для Lua
+		} else if (strcmp(extension, ".dart") == 0) {
+			add_syntax_rules_dart(); // Добавить правила для Dart
+		} else if (strcmp(extension, ".ex") == 0) {
+			add_syntax_rules_elixir(); // Добавить правила для Elixir
+		} else if (strcmp(extension, ".r") == 0) {
+			add_syntax_rules_r(); // Добавить правила для R
+		} else if (strcmp(extension, ".m") == 0 || strcmp(extension, ".mm") == 0) {
+			add_syntax_rules_objective_c(); // Добавить правила для Objective-C
+		} else if (strcmp(extension, ".mat") == 0) {
+			add_syntax_rules_matlab(); // Добавить правила для MATLAB
+		} else if (strcmp(extension, ".sh") == 0) {
+			add_syntax_rules_shell(); // Добавить правила для Shell
+		} else if (strcmp(extension, ".groovy") == 0) {
+			add_syntax_rules_groovy(); // Добавить правила для Groovy
+		} else if (strcmp(extension, ".bat") == 0) {
+			add_syntax_rules_batch(); // Добавить правила для Batch
+		} else if (strcmp(extension, ".ps1") == 0) {
+			add_syntax_rules_powershell(); // Добавить правила для PowerShell
+		} else if (strcmp(extension, ".fs") == 0) {
+			add_syntax_rules_fsharp(); // Добавить правила для F#
+		} else if (strcmp(extension, ".cs") == 0) {
+			add_syntax_rules_csharp(); // Добавить правила для C#
+		} else if (strcmp(extension, ".html") == 0 || strcmp(extension, ".htm") == 0) {
+			add_syntax_rules_html(); // Добавить правила для HTML
+		} else if (strcmp(extension, ".css") == 0) {
+			add_syntax_rules_css(); // Добавить правила для CSS
+		}
+	}
+		
     lines = malloc(MAX_LINES * sizeof(char*));
     for (int i = 0; i < MAX_LINES; i++) {
         lines[i] = malloc(MAX_LINE_LENGTH);
