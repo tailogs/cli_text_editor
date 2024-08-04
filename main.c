@@ -591,6 +591,12 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
+    // Restore cursor visibility before exit
+    CONSOLE_CURSOR_INFO cursorInfo;
+    GetConsoleCursorInfo(hConsole, &cursorInfo);
+    cursorInfo.bVisible = TRUE;
+    SetConsoleCursorInfo(hConsole, &cursorInfo);
+
     clear_console(); // Clear console before exit
 
     // Free resources
