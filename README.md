@@ -1,8 +1,8 @@
 # Text Editor
 
 ## Изображение
-	
-![image](https://github.com/user-attachments/assets/0e76933e-8cfb-4a49-86ed-159918405823) <br> Рисунок 1. Интерфейс программы
+
+![image](https://github.com/user-attachments/assets/2d6cfc2b-f8c3-4d6e-b1da-06771e965f74) <br> Рисунок 1. Интерфейс программы
 
 ## Описание
 
