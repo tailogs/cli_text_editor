@@ -3,6 +3,7 @@
 #include <string.h>
 #include <conio.h>
 #include <windows.h>
+#include <locale.h>
 #include "syntax.h"
 
 #define MAX_LINES 10000
@@ -19,7 +20,7 @@ int top_line = 0;
 int screen_height;
 int screen_width;
 int max_line_number_length;
-char clipboard[MAX_CLIPBOARD_SIZE]; // Р‘СѓС„РµСЂ РґР»СЏ РєРѕРїРёСЂРѕРІР°РЅРёСЏ С‚РµРєСЃС‚Р°
+char clipboard[MAX_CLIPBOARD_SIZE]; // Буфер для копирования текста
 int clipboard_size = 0;
 
 HANDLE hConsole;
@@ -282,38 +283,38 @@ void fill_console_buffer() {
     free(buffer);
 }
 
-// Р¤СѓРЅРєС†РёСЏ РґР»СЏ РєРѕРїРёСЂРѕРІР°РЅРёСЏ СЃС‚СЂРѕРєРё Р±РµР· РЅРѕРјРµСЂР°
+// Функция для копирования строки без номера
 void copy_line_without_number() {
-    // РЈР±РµРґРёС‚РµСЃСЊ, С‡С‚Рѕ `current_line` РЅРµ РїСЂРµРІС‹С€Р°РµС‚ С‡РёСЃР»Рѕ СЃС‚СЂРѕРє
+    // Убедитесь, что `current_line` не превышает число строк
     if (current_line >= num_lines) {
-        clipboard[0] = '\0'; // Р•СЃР»Рё СЃС‚СЂРѕРєР° РЅРµРґРѕСЃС‚СѓРїРЅР°, РѕС‡РёСЃС‚РёС‚Рµ Р±СѓС„РµСЂ
+        clipboard[0] = '\0'; // Если строка недоступна, очистите буфер
         clipboard_size = 0;
         return;
     }
 
-    // Р Р°СЃС‡РµС‚ РґР»РёРЅС‹ СЃС‚СЂРѕРєРё Р±РµР· СѓС‡РµС‚Р° РЅРѕРјРµСЂР° СЃС‚СЂРѕРєРё
+    // Расчет длины строки без учета номера строки
     int line_length = strlen(lines[current_line]);
     char number_str[10];
-    int number_length = sprintf(number_str, "%d", current_line + 1); // Р”Р»РёРЅР° РЅРѕРјРµСЂР° СЃС‚СЂРѕРєРё
-    int padding = 3; // Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Р№ РѕС‚СЃС‚СѓРї РїРѕСЃР»Рµ РЅРѕРјРµСЂР°
+    int number_length = sprintf(number_str, "%d", current_line + 1); // Длина номера строки
+    int padding = 3; // Дополнительный отступ после номера
 
-    // Р•СЃР»Рё С‚РµРєСѓС‰Р°СЏ СЃС‚СЂРѕРєР° РїСѓСЃС‚Р°СЏ
+    // Если текущая строка пустая
     if (line_length <= number_length + padding) {
-        clipboard[0] = '\0'; // РћС‡РёСЃС‚РёС‚Рµ Р±СѓС„РµСЂ, РµСЃР»Рё РІ СЃС‚СЂРѕРєРµ РЅРµС‚ С‚РµРєСЃС‚Р°
+        clipboard[0] = '\0'; // Очистите буфер, если в строке нет текста
         clipboard_size = 0;
         return;
     }
 
-    // РљРѕРїРёСЂРѕРІР°РЅРёРµ С‚РµРєСЃС‚Р° СЃС‚СЂРѕРєРё Р±РµР· РЅРѕРјРµСЂР° Рё РѕС‚СЃС‚СѓРїР°
+    // Копирование текста строки без номера и отступа
     int text_start_index = number_length + padding;
     int text_length = line_length - text_start_index;
 
     if (text_length > 0) {
         strncpy(clipboard, &lines[current_line][text_start_index], MIN(text_length, MAX_CLIPBOARD_SIZE));
         clipboard_size = MIN(text_length, MAX_CLIPBOARD_SIZE);
-        clipboard[clipboard_size] = '\0'; // Р—Р°РІРµСЂС€Р°СЋС‰РёР№ РЅСѓР»РµРІРѕР№ СЃРёРјРІРѕР»
+        clipboard[clipboard_size] = '\0'; // Завершающий нулевой символ
     } else {
-        clipboard[0] = '\0'; // Р•СЃР»Рё РЅРµС‚ С‚РµРєСЃС‚Р° РґР»СЏ РєРѕРїРёСЂРѕРІР°РЅРёСЏ
+        clipboard[0] = '\0'; // Если нет текста для копирования
         clipboard_size = 0;
     }
 }
@@ -324,9 +325,14 @@ void update_cursor_position() {
 }
 
 void insert_char(char c) {
-    if (strlen(lines[current_line]) < MAX_LINE_LENGTH - 1) {
-        memmove(&lines[current_line][current_col + 1], &lines[current_line][current_col], MAX_LINE_LENGTH - current_col - 1);
-        lines[current_line][current_col] = c;
+    size_t line_length = strlen(lines[current_line]);
+    if (current_col < MAX_LINE_LENGTH - 1) {
+        if (current_col >= line_length) {
+            lines[current_line][current_col] = c;
+        } else {
+            memmove(&lines[current_line][current_col + 1], &lines[current_line][current_col], line_length - current_col + 1);
+            lines[current_line][current_col] = c;
+        }
         current_col++;
         fill_console_buffer(); // Redraw entire buffer
         update_cursor_position();
@@ -346,12 +352,13 @@ void insert_tab() {
 
 void delete_char() {
     if (current_col > 0) {
-        memmove(&lines[current_line][current_col - 1], &lines[current_line][current_col], strlen(lines[current_line]) - current_col + 1);
+        size_t line_length = strlen(lines[current_line]);
+        memmove(&lines[current_line][current_col - 1], &lines[current_line][current_col], line_length - current_col + 1);
         current_col--;
         fill_console_buffer(); // Redraw entire buffer
         update_cursor_position();
     } else if (current_line > 0) {
-        int prev_len = strlen(lines[current_line - 1]);
+        size_t prev_len = strlen(lines[current_line - 1]);
         strcat(lines[current_line - 1], lines[current_line]);
         free(lines[current_line]);
         memmove(&lines[current_line], &lines[current_line + 1], (num_lines - current_line - 1) * sizeof(char*));
@@ -367,19 +374,19 @@ void delete_after_cursor() {
     size_t line_length = strlen(lines[current_line]);
 
     if (current_col < line_length) {
-        // РЈРґР°Р»РµРЅРёРµ СЃРёРјРІРѕР»Р° РїРѕСЃР»Рµ РєСѓСЂСЃРѕСЂР° РІ С‚РµРєСѓС‰РµР№ СЃС‚СЂРѕРєРµ
+        // Удаление символа после курсора в текущей строке
         memmove(&lines[current_line][current_col], &lines[current_line][current_col + 1], line_length - current_col);
-        lines[current_line][line_length - 1] = '\0'; // РћР±РЅРѕРІР»СЏРµРј РєРѕРЅРµС† СЃС‚СЂРѕРєРё
+        lines[current_line][line_length - 1] = '\0'; // Обновляем конец строки
     } else if (current_line < num_lines - 1) {
-        // РћР±СЉРµРґРёРЅРµРЅРёРµ С‚РµРєСѓС‰РµР№ СЃС‚СЂРѕРєРё СЃ СЃР»РµРґСѓСЋС‰РµР№ СЃС‚СЂРѕРєРѕР№
+        // Объединение текущей строки с следующей строкой
         strcat(lines[current_line], lines[current_line + 1]);
 
-        // РЈРґР°Р»РµРЅРёРµ СЃС‚СЂРѕРєРё
+        // Удаление строки
         free(lines[current_line + 1]);
         memmove(&lines[current_line + 1], &lines[current_line + 2], (num_lines - current_line - 2) * sizeof(char*));
         num_lines--;
     }
-    fill_console_buffer(); // РџРµСЂРµСЂРёСЃРѕРІР°С‚СЊ РІРµСЃСЊ Р±СѓС„РµСЂ
+    fill_console_buffer(); // Перерисовать весь буфер
     update_cursor_position();
 }
 
@@ -419,13 +426,32 @@ void clear_console() {
 
     GetConsoleScreenBufferInfo(hConsole, &csbi);
     dwConSize = csbi.dwSize.X * csbi.dwSize.Y;
-    FillConsoleOutputCharacter(hConsole, (TCHAR) ' ', dwConSize, coordScreen, &cCharsWritten);
-    GetConsoleScreenBufferInfo(hConsole, &csbi);
+    FillConsoleOutputCharacter(hConsole, ' ', dwConSize, coordScreen, &cCharsWritten);
     FillConsoleOutputAttribute(hConsole, csbi.wAttributes, dwConSize, coordScreen, &cCharsWritten);
     SetConsoleCursorPosition(hConsole, coordScreen);
 }
 
+void initialize_lines() {
+    lines = malloc(MAX_LINES * sizeof(char*));
+    for (int i = 0; i < MAX_LINES; i++) {
+        lines[i] = malloc(MAX_LINE_LENGTH);
+        lines[i][0] = '\0'; // Инициализация пустыми строками
+    }
+    num_lines = 0; // Устанавливаем начальное количество строк
+}
+
+void cleanup_lines() {
+    for (int i = 0; i < MAX_LINES; i++) {
+        free(lines[i]); // Освобождение памяти для каждой строки
+    }
+    free(lines); // Освобождение массива строк
+}
+
 int main(int argc, char* argv[]) {
+    setlocale(LC_ALL, "");
+    SetConsoleOutputCP(1251);
+    SetConsoleCP(1251);
+
     if (argc != 2) {
         printf("Usage: %s <filename>\n", argv[0]);
         return 1;
@@ -435,97 +461,95 @@ int main(int argc, char* argv[]) {
     get_console_size();
     clear_console(); // Clear console on startup
 
-	// РћРїСЂРµРґРµР»РµРЅРёРµ СЂР°СЃС€РёСЂРµРЅРёСЏ С„Р°Р№Р»Р°
-	char* filename = argv[1];
-	char* extension = strrchr(filename, '.');
+    // Определение расширения файла
+    char* filename = argv[1];
+    char* extension = strrchr(filename, '.');
 
-	if (extension) {
-		if (strcmp(extension, ".c") == 0 || strcmp(extension, ".cpp") == 0) {
-			add_syntax_rules_c_and_cpp(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ C/C++
-		} else if (strcmp(extension, ".py") == 0) {
-			add_syntax_rules_python(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ Python
-		} else if (strcmp(extension, ".rb") == 0) {
-			add_syntax_rules_ruby(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ Ruby
-		} else if (strcmp(extension, ".js") == 0) {
-			add_syntax_rules_javascript(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ JavaScript
-		} else if (strcmp(extension, ".java") == 0) {
-			add_syntax_rules_java(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ Java
-		} else if (strcmp(extension, ".php") == 0) {
-			add_syntax_rules_php(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ PHP
-		} else if (strcmp(extension, ".kt") == 0) {
-			add_syntax_rules_kotlin(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ Kotlin
-		} else if (strcmp(extension, ".rs") == 0) {
-			add_syntax_rules_rust(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ Rust
-		} else if (strcmp(extension, ".swift") == 0) {
-			add_syntax_rules_swift(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ Swift
-		} else if (strcmp(extension, ".pl") == 0) {
-			add_syntax_rules_perl(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ Perl
-		} else if (strcmp(extension, ".hs") == 0) {
-			add_syntax_rules_haskell(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ Haskell
-		} else if (strcmp(extension, ".go") == 0) {
-			add_syntax_rules_go(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ Go
-		} else if (strcmp(extension, ".ts") == 0) {
-			add_syntax_rules_typescript(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ TypeScript
-		} else if (strcmp(extension, ".scala") == 0) {
-			add_syntax_rules_scala(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ Scala
-		} else if (strcmp(extension, ".lua") == 0) {
-			add_syntax_rules_lua(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ Lua
-		} else if (strcmp(extension, ".dart") == 0) {
-			add_syntax_rules_dart(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ Dart
-		} else if (strcmp(extension, ".ex") == 0) {
-			add_syntax_rules_elixir(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ Elixir
-		} else if (strcmp(extension, ".r") == 0) {
-			add_syntax_rules_r(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ R
-		} else if (strcmp(extension, ".m") == 0 || strcmp(extension, ".mm") == 0) {
-			add_syntax_rules_objective_c(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ Objective-C
-		} else if (strcmp(extension, ".mat") == 0) {
-			add_syntax_rules_matlab(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ MATLAB
-		} else if (strcmp(extension, ".sh") == 0) {
-			add_syntax_rules_shell(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ Shell
-		} else if (strcmp(extension, ".groovy") == 0) {
-			add_syntax_rules_groovy(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ Groovy
-		} else if (strcmp(extension, ".bat") == 0) {
-			add_syntax_rules_batch(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ Batch
-		} else if (strcmp(extension, ".ps1") == 0) {
-			add_syntax_rules_powershell(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ PowerShell
-		} else if (strcmp(extension, ".fs") == 0) {
-			add_syntax_rules_fsharp(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ F#
-		} else if (strcmp(extension, ".cs") == 0) {
-			add_syntax_rules_csharp(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ C#
-		} else if (strcmp(extension, ".html") == 0 || strcmp(extension, ".htm") == 0) {
-			add_syntax_rules_html(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ HTML
-		} else if (strcmp(extension, ".css") == 0) {
-			add_syntax_rules_css(); // Р”РѕР±Р°РІРёС‚СЊ РїСЂР°РІРёР»Р° РґР»СЏ CSS
-		}
-	}
-		
-    lines = malloc(MAX_LINES * sizeof(char*));
-    for (int i = 0; i < MAX_LINES; i++) {
-        lines[i] = malloc(MAX_LINE_LENGTH);
-        lines[i][0] = '\0';
+    if (extension) {
+        if (strcmp(extension, ".c") == 0 || strcmp(extension, ".cpp") == 0) {
+            add_syntax_rules_c_and_cpp();
+        } else if (strcmp(extension, ".py") == 0) {
+            add_syntax_rules_python();
+        } else if (strcmp(extension, ".rb") == 0) {
+            add_syntax_rules_ruby();
+        } else if (strcmp(extension, ".js") == 0) {
+            add_syntax_rules_javascript();
+        } else if (strcmp(extension, ".java") == 0) {
+            add_syntax_rules_java();
+        } else if (strcmp(extension, ".php") == 0) {
+            add_syntax_rules_php();
+        } else if (strcmp(extension, ".kt") == 0) {
+            add_syntax_rules_kotlin();
+        } else if (strcmp(extension, ".rs") == 0) {
+            add_syntax_rules_rust();
+        } else if (strcmp(extension, ".swift") == 0) {
+            add_syntax_rules_swift();
+        } else if (strcmp(extension, ".pl") == 0) {
+            add_syntax_rules_perl();
+        } else if (strcmp(extension, ".hs") == 0) {
+            add_syntax_rules_haskell();
+        } else if (strcmp(extension, ".go") == 0) {
+            add_syntax_rules_go();
+        } else if (strcmp(extension, ".ts") == 0) {
+            add_syntax_rules_typescript();
+        } else if (strcmp(extension, ".scala") == 0) {
+            add_syntax_rules_scala();
+        } else if (strcmp(extension, ".lua") == 0) {
+            add_syntax_rules_lua();
+        } else if (strcmp(extension, ".dart") == 0) {
+            add_syntax_rules_dart();
+        } else if (strcmp(extension, ".ex") == 0) {
+            add_syntax_rules_elixir();
+        } else if (strcmp(extension, ".r") == 0) {
+            add_syntax_rules_r();
+        } else if (strcmp(extension, ".m") == 0 || strcmp(extension, ".mm") == 0) {
+            add_syntax_rules_objective_c();
+        } else if (strcmp(extension, ".mat") == 0) {
+            add_syntax_rules_matlab();
+        } else if (strcmp(extension, ".sh") == 0) {
+            add_syntax_rules_shell();
+        } else if (strcmp(extension, ".groovy") == 0) {
+            add_syntax_rules_groovy();
+        } else if (strcmp(extension, ".bat") == 0) {
+            add_syntax_rules_batch();
+        } else if (strcmp(extension, ".ps1") == 0) {
+            add_syntax_rules_powershell();
+        } else if (strcmp(extension, ".fs") == 0) {
+            add_syntax_rules_fsharp();
+        } else if (strcmp(extension, ".cs") == 0) {
+            add_syntax_rules_csharp();
+        } else if (strcmp(extension, ".html") == 0 || strcmp(extension, ".htm") == 0) {
+            add_syntax_rules_html();
+        } else if (strcmp(extension, ".css") == 0) {
+            add_syntax_rules_css();
+        }
     }
+    
+    initialize_lines(); // Инициализация строк
 
     FILE* file = fopen(argv[1], "r");
     if (!file) {
-        // File does not exist, create a new file with a single empty line
+        // Файл не существует, создаём новый файл с одной пустой строкой
         file = fopen(argv[1], "w");
         if (file) {
-            fprintf(file, "\n"); // Add an empty line to the file
+            fprintf(file, "\n"); // Добавляем пустую строку в файл
             fclose(file);
         } else {
             perror("Error creating file");
+            cleanup_lines(); // Освобождение ресурсов перед выходом
             return 1;
         }
 
-        // Re-open the file for reading
+        // Переоткрываем файл для чтения
         file = fopen(argv[1], "r");
         if (!file) {
             perror("Error reopening file");
+            cleanup_lines(); // Освобождение ресурсов перед выходом
             return 1;
         }
     }
 
-    // Read the file contents
+    // Чтение содержимого файла
     while (fgets(lines[num_lines], MAX_LINE_LENGTH, file) && num_lines < MAX_LINES) {
         lines[num_lines][strcspn(lines[num_lines], "\n")] = 0;
         num_lines++;
@@ -533,91 +557,84 @@ int main(int argc, char* argv[]) {
     fclose(file);
 
     max_line_number_length = calculate_max_line_number_length();
-    fill_console_buffer(); // Initial draw
+    fill_console_buffer(); // Изначальная отрисовка
 
     while (1) {
-		int c = _getch();
-		if (c == 0 || c == 224) { // Handle arrow keys and other extended keys
-			c = _getch();
-			switch (c) {
-				case 72: // Up
-					if (current_line > top_line) {
-						current_line--;
-						current_col = MIN(current_col, strlen(lines[current_line]));
-						fill_console_buffer(); // Redraw entire buffer
-						update_cursor_position();
-					}
-					break;
-				case 80: // Down
-					if (current_line < num_lines - 1) {
-						current_line++;
-						current_col = MIN(current_col, strlen(lines[current_line]));
-						fill_console_buffer(); // Redraw entire buffer
-						update_cursor_position();
-					}
-					break;
-				case 75: // Left
-					if (current_col > 0) {
-						current_col--;
-						fill_console_buffer(); // Redraw entire buffer
-						update_cursor_position();
-					} else if (current_line > 0) {
-						current_line--;
-						current_col = strlen(lines[current_line]);
-						fill_console_buffer(); // Redraw entire buffer
-						update_cursor_position();
-					}
-					break;
-				case 77: // Right
-					if (current_col < strlen(lines[current_line])) {
-						current_col++;
-						fill_console_buffer(); // Redraw entire buffer
-						update_cursor_position();
-					} else if (current_line < num_lines - 1) {
-						current_line++;
-						current_col = 0;
-						fill_console_buffer(); // Redraw entire buffer
-						update_cursor_position();
-					}
-					break;
-				case 83: // Delete
-					delete_after_cursor();
-					break;
-			}
-		} else if (c == 13) { // Enter
-			new_line();
-		} else if (c == 8) { // Backspace
-			delete_char();
-		} else if (c == 9) { // Tab
-			insert_tab();
-		} else if (c == 19) { // Ctrl+S
-			save_file(argv[1]);
-		} else if (c == 17) { // Ctrl+Q
-			break;
-		} else if (c == 3) { // Ctrl+C
-			copy_line_without_number();
-			printf("Line copied to clipboard.\n");
-		} else if (c >= 32 && c <= 126) { // Regular printable characters
-			insert_char(c);
-		}
-	}
+        int c = _getch();
+        if (c == 0 || c == 224) { // Обработка стрелок и других расширенных клавиш
+            c = _getch();
+            switch (c) {
+                case 72: // Вверх
+                    if (current_line > top_line) {
+                        current_line--;
+                        current_col = MIN(current_col, strlen(lines[current_line]));
+                        fill_console_buffer();
+                        update_cursor_position();
+                    }
+                    break;
+                case 80: // Вниз
+                    if (current_line < num_lines - 1) {
+                        current_line++;
+                        current_col = MIN(current_col, strlen(lines[current_line]));
+                        fill_console_buffer();
+                        update_cursor_position();
+                    }
+                    break;
+                case 75: // Влево
+                    if (current_col > 0) {
+                        current_col--;
+                        fill_console_buffer();
+                        update_cursor_position();
+                    } else if (current_line > 0) {
+                        current_line--;
+                        current_col = strlen(lines[current_line]);
+                        fill_console_buffer();
+                        update_cursor_position();
+                    }
+                    break;
+                case 77: // Вправо
+                    if (current_col < strlen(lines[current_line])) {
+                        current_col++;
+                        fill_console_buffer();
+                        update_cursor_position();
+                    } else if (current_line < num_lines - 1) {
+                        current_line++;
+                        current_col = 0;
+                        fill_console_buffer();
+                        update_cursor_position();
+                    }
+                    break;
+                case 83: // Удаление
+                    delete_after_cursor();
+                    break;
+            }
+        } else if (c == 13) { // Enter
+            new_line();
+        } else if (c == 8) { // Backspace
+            delete_char();
+        } else if (c == 9) { // Tab
+            insert_tab();
+        } else if (c == 19) { // Ctrl+S
+            save_file(argv[1]);
+        } else if (c == 17) { // Ctrl+Q
+            break;
+        } else if (c == 3) { // Ctrl+C
+            copy_line_without_number();
+            printf("Line copied to clipboard.\n");
+        } else if (c >= 32 && c <= 126) { // Обычные печатные символы
+            insert_char(c);
+        }
+    }
 
-    // Restore cursor visibility before exit
+    // Восстановление видимости курсора перед выходом
     CONSOLE_CURSOR_INFO cursorInfo;
     GetConsoleCursorInfo(hConsole, &cursorInfo);
     cursorInfo.bVisible = TRUE;
     SetConsoleCursorInfo(hConsole, &cursorInfo);
 
-    clear_console(); // Clear console before exit
+    clear_console(); // Очистка экрана перед выходом
 
-    // Free resources
-    for (int i = 0; i < MAX_LINES; i++) {
-        free(lines[i]);
-    }
-    free(lines);
-    for (int i = 0; i < syntax_rules_count; i++) {
-        free(syntax_rules[i].keyword);
-    }
+    cleanup_lines(); // Освобождение ресурсов перед выходом
 
     return 0;
 }
