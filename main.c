@@ -7,14 +7,14 @@
 
 #define MAX_LINES 10000
 #define MAX_LINE_LENGTH 1000
-#define MIN(a, b) ((size_t)(a) < (size_t)(b) ? (a) : (b))
+#define MIN(a, b) (((size_t)(a) < (size_t)(b)) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MAX_CLIPBOARD_SIZE 10000
 
 char** lines;
 int num_lines = 0;
 int current_line = 0;
-int current_col = 0;
+size_t current_col = 0;
 int top_line = 0;
 int screen_height;
 int screen_width;
@@ -56,7 +56,6 @@ int calculate_max_line_number_length() {
 }
 
 void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int start_col) {
-    int col = start_col;
     int line_len = strlen(line);
     int i;
 
@@ -246,7 +245,7 @@ void fill_console_buffer() {
             start_col++;
         }
 
-        for (int j = 0; j < strlen(line_num_str); j++) {
+        for (size_t j = 0; j < strlen(line_num_str); j++) {
             buffer[i * screen_width + start_col + j].Char.AsciiChar = line_num_str[j];
             buffer[i * screen_width + start_col + j].Attributes = 15; // White text
         }
@@ -294,7 +293,8 @@ void copy_line_without_number() {
 
     // Расчет длины строки без учета номера строки
     int line_length = strlen(lines[current_line]);
-    int number_length = snprintf(NULL, 0, "%d", current_line + 1); // Длина номера строки
+    char number_str[10];
+    int number_length = sprintf(number_str, "%d", current_line + 1); // Длина номера строки
     int padding = 3; // Дополнительный отступ после номера
 
     // Если текущая строка пустая
@@ -364,7 +364,7 @@ void delete_char() {
 }
 
 void delete_after_cursor() {
-    int line_length = strlen(lines[current_line]);
+    size_t line_length = strlen(lines[current_line]);
 
     if (current_col < line_length) {
         // Удаление символа после курсора в текущей строке
