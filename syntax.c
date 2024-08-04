@@ -30,32 +30,71 @@ void add_syntax_rules_c_and_cpp() {
         "protected", "struct", "namespace", "template", "void", "static", "auto", "const", 
         "sizeof", "true", "false", "NULL", "break", "continue", "switch", "case", "default", 
         "typedef", "volatile", "extern", "register", "union", "goto", "long", "short", 
-        "char", "float", "double", "unsigned", "signed"
+        "char", "float", "double", "unsigned", "signed", "size_t", "this", "virtual", 
+        "override", "final", "noexcept", "decltype", "constexpr", "thread_local", 
+        "alignas", "alignof", "static_assert", "dynamic_cast", "static_cast", "const_cast", 
+        "reinterpret_cast", "requires", "concept", "co_return", "co_yield", "co_await", 
+        "import", "module", "export", "char8_t", "char16_t", "char32_t", "constexpr", 
+        "consteval", "constinit", "decltype", "explicit", "inline", "module"
     };
     
     const char* functions[] = {
+        // C стандартные функции (без пространств имен)
         "printf", "scanf", "fprintf", "fscanf", "sprintf", "sscanf", "fopen", "fclose", 
         "fgets", "fputs", "fread", "fwrite", "fflush", "fseek", "ftell", "rewind", "malloc", 
         "calloc", "realloc", "free", "exit", "atexit", "abs", "rand", "srand", "strlen", 
         "strcpy", "strncpy", "strcat", "strncat", "strcmp", "strncmp", "strchr", "strrchr", 
         "strstr", "memcpy", "memmove", "memcmp", "memset", "isdigit", "isalpha", "islower", 
         "isupper", "tolower", "toupper", "sin", "cos", "tan", "sqrt", "pow", "log", 
-        "exp", "std::cout", "cout", "std::cin", "cin", "std::cerr", "cerr", "std::clog", 
-        "clog", "std::ifstream", "ifstream", "std::ofstream", "ofstream", "std::fstream", 
-        "fstream", "std::stringstream", "stringstream", "std::vector", "vector", "std::map", 
-        "map", "std::set", "set", "std::list", "list", "std::sort", "sort", "std::find", 
-        "find", "std::thread", "thread", "std::mutex", "mutex"
+        "exp",
+
+        // C++ стандартные функции с пространствами имен
+        // std::cout, std::cin и т.д.
+        "std::cout", "std::cin", "std::cerr", "std::clog", 
+        "std::ifstream", "std::ofstream", "std::fstream", "std::stringstream",
+        "std::vector", "std::map", "std::set", "std::list", "std::sort", "std::find",
+        "std::thread", "std::mutex", "std::lock_guard", "std::unique_lock", "std::async", 
+        "std::promise", "std::future", "std::atomic", "std::shared_ptr", "std::weak_ptr", 
+        "std::make_shared", "std::make_unique", 
+
+        // Упрощенные варианты
+        "cout", "cin", "cerr", "clog", 
+        "ifstream", "ofstream", "fstream", "stringstream",
+        "vector", "map", "set", "list", "sort", "find",
+        "thread", "mutex", "lock_guard", "unique_lock", "async", 
+        "promise", "future", "atomic", "shared_ptr", "weak_ptr", 
+        "make_shared", "make_unique",
+
+        // std::chrono и другие
+        "std::chrono::steady_clock", "chrono::steady_clock", "steady_clock",
+        "std::chrono::high_resolution_clock", "chrono::high_resolution_clock", "high_resolution_clock",
+        "std::chrono::system_clock", "chrono::system_clock", "system_clock",
+        "std::chrono::duration", "chrono::duration", "duration",
+        "std::chrono::seconds", "chrono::seconds", "seconds",
+        "std::chrono::milliseconds", "chrono::milliseconds", "milliseconds",
+        "std::chrono::microseconds", "chrono::microseconds", "microseconds",
+        "std::chrono::nanoseconds", "chrono::nanoseconds", "nanoseconds",
+        "std::tuple", "tuple", "std::get", "get", 
+        "std::apply", "apply"
     };
+
     
     const char* headers[] = {
-        "<stdio.h>", "<stdlib.h>", "<string.h>", "<conio.h>", "<windows.h>", "<iostream>", 
-        "<fstream>", "<sstream>", "<vector>", "<map>", "<set>", "<list>", "<algorithm>", 
-        "<cassert>", "<cctype>", "<cfloat>", "<climits>", "<cstdarg>", "<cstddef>", "<cstdio>", 
-        "<cstdlib>", "<cstring>", "<cwchar>", "<cwctype>", "<locale>", "<new>", "<typeinfo>", 
-        "<utility>", "<bitset>", "<complex>", "<exception>", "<functional>", "<future>", 
-        "<initializer_list>", "<iterator>", "<mutex>", "<random>", "<ratio>", "<regex>", 
-        "<system_error>", "<thread>", "<tuple>", "<typeindex>", "<utility>"
+        // C стандартные заголовочные файлы
+        "<stdio.h>", "<stdlib.h>", "<string.h>", "<conio.h>", "<windows.h>", 
+
+        // C++ стандартные заголовочные файлы
+        "<iostream>", "<fstream>", "<sstream>", "<vector>", "<map>", "<set>", "<list>", 
+        "<algorithm>", "<cassert>", "<cctype>", "<cfloat>", "<climits>", "<cstdarg>", 
+        "<cstddef>", "<cstdio>", "<cstdlib>", "<cstring>", "<cwchar>", "<cwctype>", 
+        "<locale>", "<new>", "<typeinfo>", "<utility>", "<bitset>", "<complex>", 
+        "<exception>", "<functional>", "<future>", "<initializer_list>", "<iterator>", 
+        "<mutex>", "<random>", "<ratio>", "<regex>", "<system_error>", "<thread>", 
+        "<tuple>", "<typeindex>", "<utility>", "<chrono>", "<atomic>", "<shared_mutex>", 
+        "<shared_lock>", "<lock_guard>", "<unique_lock>", "<memory>", "<filesystem>", 
+        "<numbers>", "<format>", "<ranges>", "<concepts>"
     };
+
     
     add_syntax_rules(keywords, COLOR_KEYWORD, sizeof(keywords) / sizeof(keywords[0]));
     add_syntax_rules(functions, COLOR_FUNCTION, sizeof(functions) / sizeof(functions[0]));
