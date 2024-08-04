@@ -60,67 +60,78 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
     int line_len = strlen(line);
     int i;
 
-    // Initialize buffer with default color (white)
+    // Create a buffer to store the line with tab substitutions
+    char expanded_line[2048]; // Assumes line length is less than 2048 characters
+    int expanded_len = 0;
+
+    // Expand tabs to spaces
     for (i = 0; i < line_len; i++) {
+        if (line[i] == '\t') {
+            int spaces = 4 - (expanded_len % 4); // Number of spaces to add
+            for (int j = 0; j < spaces; j++) {
+                expanded_line[expanded_len++] = ' ';
+            }
+        } else {
+            expanded_line[expanded_len++] = line[i];
+        }
+    }
+    expanded_line[expanded_len] = '\0'; // Null-terminate the expanded line
+
+    // Initialize buffer with default color (white)
+    for (i = 0; i < expanded_len; i++) {
         buffer[row * screen_width + start_col + i].Attributes = 15; // White text
     }
 
     // Apply syntax highlighting rules for comments
     i = 0;
-    while (i < line_len) {
+    while (i < expanded_len) {
         // Single-line comments (C, C++, Java, JavaScript, Python, Ruby, Perl, Haskell)
-        if (line[i] == '/' && i + 1 < line_len && (line[i + 1] == '/' || line[i + 1] == '*')) {
+        if (expanded_line[i] == '/' && i + 1 < expanded_len && (expanded_line[i + 1] == '/' || expanded_line[i + 1] == '*')) {
             // C, C++, Java, JavaScript (// and /* ... */)
-            if (line[i + 1] == '/') {
-                //int start = i;
-                while (i < line_len) {
+            if (expanded_line[i + 1] == '/') {
+                while (i < expanded_len) {
                     buffer[row * screen_width + start_col + i].Attributes = 8; // Dark gray for single-line comments
                     i++;
                 }
-            } else if (line[i + 1] == '*') {
-                // Multi-line comment (C, C++, Java, JavaScript)
-                //int start = i;
+            } else if (expanded_line[i + 1] == '*') {
                 i += 2; // Skip "/*"
-                while (i < line_len) {
-                    if (line[i] == '*' && i + 1 < line_len && line[i + 1] == '/') {
+                while (i < expanded_len) {
+                    if (expanded_line[i] == '*' && i + 1 < expanded_len && expanded_line[i + 1] == '/') {
                         i += 2; // Skip "*/"
                         break;
                     }
                     buffer[row * screen_width + start_col + i].Attributes = 8; // Dark gray for multi-line comments
                     i++;
                 }
-                if (i == line_len) {
+                if (i == expanded_len) {
                     // Handle case where comment goes to the end of the line
-                    buffer[row * screen_width + start_col + line_len - 1].Attributes = 8;
+                    buffer[row * screen_width + start_col + expanded_len - 1].Attributes = 8;
                 }
             }
-        } else if (line[i] == '#' && (i == 0 || line[i - 1] == ' ')) {
+        } else if (expanded_line[i] == '#' && (i == 0 || expanded_line[i - 1] == ' ')) {
             // Single-line comments (Python, Ruby, Perl)
-            //int start = i;
-            while (i < line_len) {
+            while (i < expanded_len) {
                 buffer[row * screen_width + start_col + i].Attributes = 8; // Dark gray for single-line comments
                 i++;
             }
-        } else if (line[i] == '<' && i + 3 < line_len && line[i + 1] == '!' && line[i + 2] == '-' && line[i + 3] == '-') {
+        } else if (expanded_line[i] == '<' && i + 3 < expanded_len && expanded_line[i + 1] == '!' && expanded_line[i + 2] == '-' && expanded_line[i + 3] == '-') {
             // HTML/JavaScript/Java multi-line comment
-            //int start = i;
             i += 4; // Skip "<!--"
-            while (i < line_len) {
-                if (line[i] == '-' && i + 2 < line_len && line[i + 1] == '-' && line[i + 2] == '>') {
+            while (i < expanded_len) {
+                if (expanded_line[i] == '-' && i + 2 < expanded_len && expanded_line[i + 1] == '-' && expanded_line[i + 2] == '>') {
                     i += 3; // Skip "-->"
                     break;
                 }
                 buffer[row * screen_width + start_col + i].Attributes = 8; // Dark gray for multi-line comments
                 i++;
             }
-            if (i == line_len) {
+            if (i == expanded_len) {
                 // Handle case where comment goes to the end of the line
-                buffer[row * screen_width + start_col + line_len - 1].Attributes = 8;
+                buffer[row * screen_width + start_col + expanded_len - 1].Attributes = 8;
             }
-        } else if (line[i] == '-' && i + 1 < line_len && line[i + 1] == '-') {
+        } else if (expanded_line[i] == '-' && i + 1 < expanded_len && expanded_line[i + 1] == '-') {
             // Haskell single-line comment
-            //int start = i;
-            while (i < line_len) {
+            while (i < expanded_len) {
                 buffer[row * screen_width + start_col + i].Attributes = 8; // Dark gray for single-line comments
                 i++;
             }
@@ -132,9 +143,9 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
     // Apply syntax highlighting rules for other elements
     for (i = 0; i < syntax_rules_count; i++) {
         SyntaxRule rule = syntax_rules[i];
-        char* ptr = strstr(line, rule.keyword);
+        char* ptr = strstr(expanded_line, rule.keyword);
         while (ptr != NULL) {
-            int index = ptr - line;
+            int index = ptr - expanded_line;
             int keyword_len = strlen(rule.keyword);
             for (int j = 0; j < keyword_len; j++) {
                 buffer[row * screen_width + start_col + index + j].Attributes = rule.color;
@@ -145,10 +156,10 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
 
     // Highlight numbers
     i = 0;
-    while (i < line_len) {
-        if (isdigit(line[i])) {
+    while (i < expanded_len) {
+        if (isdigit(expanded_line[i])) {
             int start = i;
-            while (i < line_len && isdigit(line[i])) {
+            while (i < expanded_len && isdigit(expanded_line[i])) {
                 i++;
             }
             int end = i;
@@ -162,14 +173,14 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
 
     // Highlight strings between double quotes
     i = 0;
-    while (i < line_len) {
-        if (line[i] == '"') {
+    while (i < expanded_len) {
+        if (expanded_line[i] == '"') {
             int start = i;
             i++;
-            while (i < line_len && line[i] != '"') {
+            while (i < expanded_len && expanded_line[i] != '"') {
                 i++;
             }
-            if (i < line_len) {
+            if (i < expanded_len) {
                 int end = i;
                 for (int j = start; j <= end; j++) {
                     buffer[row * screen_width + start_col + j].Attributes = 12; // Red for strings
@@ -183,14 +194,14 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
 
     // Highlight strings between single quotes
     i = 0;
-    while (i < line_len) {
-        if (line[i] == '\'') {
+    while (i < expanded_len) {
+        if (expanded_line[i] == '\'') {
             int start = i;
             i++;
-            while (i < line_len && line[i] != '\'') {
+            while (i < expanded_len && expanded_line[i] != '\'') {
                 i++;
             }
-            if (i < line_len) {
+            if (i < expanded_len) {
                 int end = i;
                 for (int j = start; j <= end; j++) {
                     buffer[row * screen_width + start_col + j].Attributes = 13; // Magenta for single-quoted strings
@@ -202,9 +213,9 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
         }
     }
 
-    // Copy the line content into the buffer
-    for (i = 0; i < line_len; i++) {
-        buffer[row * screen_width + start_col + i].Char.AsciiChar = line[i];
+    // Copy the expanded line content into the buffer
+    for (i = 0; i < expanded_len; i++) {
+        buffer[row * screen_width + start_col + i].Char.AsciiChar = expanded_line[i];
     }
 }
 
