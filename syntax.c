@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "syntax.h"
 
 SyntaxRule syntax_rules[MAX_SYNTAX_RULES];
@@ -6,7 +8,10 @@ int syntax_rules_count = 0;
 
 void add_syntax_rule(const char* keyword, int color) {
     if (syntax_rules_count < MAX_SYNTAX_RULES) {
-        syntax_rules[syntax_rules_count].keyword = strdup(keyword);
+        syntax_rules[syntax_rules_count].keyword = (char*)malloc(strlen(keyword) + 1);
+        if (syntax_rules[syntax_rules_count].keyword) {
+            strcpy(syntax_rules[syntax_rules_count].keyword, keyword);
+        }
         syntax_rules[syntax_rules_count].color = color;
         syntax_rules_count++;
     }
