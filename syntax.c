@@ -26,7 +26,7 @@ void add_syntax_rules(const char* rules[], int color, int num_rules) {
 
 void add_syntax_rules_c_and_cpp() {
     const char* keywords[] = {
-        "int", "return", "for", "while", "if", "else", "class", "public", "private", 
+        "do", "int", "return", "for", "while", "if", "else", "class", "public", "private", 
         "protected", "struct", "namespace", "template", "void", "static", "auto", "const", 
         "sizeof", "true", "false", "NULL", "break", "continue", "switch", "case", "default", 
         "typedef", "volatile", "extern", "register", "union", "goto", "long", "short", 
