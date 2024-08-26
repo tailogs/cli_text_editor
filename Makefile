@@ -8,7 +8,7 @@ all: $(OUT)
 $(OUT): $(OBJ)
 	$(CC) -o $@ $^
 
-main.o: main.c syntax.h
+main.o: main.c syntax.h 
 	$(CC) $(CFLAGS) -c $< -o $@
 
 syntax.o: syntax.c syntax.h

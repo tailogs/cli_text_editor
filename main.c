@@ -4,6 +4,7 @@
 #include <conio.h>
 #include <windows.h>
 #include <locale.h>
+#include <stdbool.h>
 #include "syntax.h"
 
 #define MAX_LINES 10000
@@ -22,6 +23,7 @@ int screen_width;
 int max_line_number_length;
 char clipboard[MAX_CLIPBOARD_SIZE]; // Буфер для копирования текста
 int clipboard_size = 0;
+int max_line_number_length = 5;
 
 HANDLE hConsole;
 COORD cursorPosition;
@@ -42,32 +44,24 @@ void set_cursor_position(int x, int y) {
     SetConsoleCursorPosition(hConsole, cursorPosition);
 }
 
-void set_console_color(int color) {
-    SetConsoleTextAttribute(hConsole, color);
-}
-
 void get_console_size() {
     GetConsoleScreenBufferInfo(hConsole, &csbi);
     screen_width = csbi.srWindow.Right - csbi.srWindow.Left + 1;
     screen_height = csbi.srWindow.Bottom - csbi.srWindow.Top + 1 - 1; // Reserve 1 line for status
 }
 
-int calculate_max_line_number_length() {
-    return 5; // Fixed length for up to 99999 lines
-}
-
 void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int start_col) {
     int line_len = strlen(line);
     int i;
 
-    // Create a buffer to store the line with tab substitutions
-    char expanded_line[2048]; // Assumes line length is less than 2048 characters
+    // Создаем буфер для строки с заменой табуляций
+    char expanded_line[2048]; // Предполагается, что длина строки меньше 2048 символов
     int expanded_len = 0;
 
-    // Expand tabs to spaces
+    // Заменяем табуляции на пробелы
     for (i = 0; i < line_len; i++) {
         if (line[i] == '\t') {
-            int spaces = 4 - (expanded_len % 4); // Number of spaces to add
+            int spaces = 4 - (expanded_len % 4); // Количество пробелов для добавления
             for (int j = 0; j < spaces; j++) {
                 expanded_line[expanded_len++] = ' ';
             }
@@ -75,86 +69,89 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
             expanded_line[expanded_len++] = line[i];
         }
     }
-    expanded_line[expanded_len] = '\0'; // Null-terminate the expanded line
+    expanded_line[expanded_len] = '\0'; // Завершаем строку
 
-    // Initialize buffer with default color (white)
+    // Инициализируем буфер с цветом по умолчанию (белый)
     for (i = 0; i < expanded_len; i++) {
-        buffer[row * screen_width + start_col + i].Attributes = 15; // White text
+        buffer[row * screen_width + start_col + i].Attributes = 15; // Белый текст
     }
 
-    // Apply syntax highlighting rules for comments
+    // Применяем правила подсветки для комментариев
     i = 0;
     while (i < expanded_len) {
-        // Single-line comments (C, C++, Java, JavaScript, Python, Ruby, Perl, Haskell)
+        // Обработка однострочных комментариев
         if (expanded_line[i] == '/' && i + 1 < expanded_len && (expanded_line[i + 1] == '/' || expanded_line[i + 1] == '*')) {
-            // C, C++, Java, JavaScript (// and /* ... */)
             if (expanded_line[i + 1] == '/') {
                 while (i < expanded_len) {
-                    buffer[row * screen_width + start_col + i].Attributes = 8; // Dark gray for single-line comments
+                    buffer[row * screen_width + start_col + i].Attributes = 8; // Темно-серый для однострочных комментариев
                     i++;
                 }
             } else if (expanded_line[i + 1] == '*') {
-                i += 2; // Skip "/*"
+                i += 2; // Пропускаем "/*"
                 while (i < expanded_len) {
                     if (expanded_line[i] == '*' && i + 1 < expanded_len && expanded_line[i + 1] == '/') {
-                        i += 2; // Skip "*/"
+                        i += 2; // Пропускаем "*/"
                         break;
                     }
-                    buffer[row * screen_width + start_col + i].Attributes = 8; // Dark gray for multi-line comments
+                    buffer[row * screen_width + start_col + i].Attributes = 8; // Темно-серый для многострочных комментариев
                     i++;
                 }
-                if (i == expanded_len) {
-                    // Handle case where comment goes to the end of the line
-                    buffer[row * screen_width + start_col + expanded_len - 1].Attributes = 8;
-                }
-            }
-        } else if (expanded_line[i] == '#' && (i == 0 || expanded_line[i - 1] == ' ')) {
-            // Single-line comments (Python, Ruby, Perl)
-            while (i < expanded_len) {
-                buffer[row * screen_width + start_col + i].Attributes = 8; // Dark gray for single-line comments
-                i++;
-            }
-        } else if (expanded_line[i] == '<' && i + 3 < expanded_len && expanded_line[i + 1] == '!' && expanded_line[i + 2] == '-' && expanded_line[i + 3] == '-') {
-            // HTML/JavaScript/Java multi-line comment
-            i += 4; // Skip "<!--"
-            while (i < expanded_len) {
-                if (expanded_line[i] == '-' && i + 2 < expanded_len && expanded_line[i + 1] == '-' && expanded_line[i + 2] == '>') {
-                    i += 3; // Skip "-->"
-                    break;
-                }
-                buffer[row * screen_width + start_col + i].Attributes = 8; // Dark gray for multi-line comments
-                i++;
-            }
-            if (i == expanded_len) {
-                // Handle case where comment goes to the end of the line
-                buffer[row * screen_width + start_col + expanded_len - 1].Attributes = 8;
-            }
-        } else if (expanded_line[i] == '-' && i + 1 < expanded_len && expanded_line[i + 1] == '-') {
-            // Haskell single-line comment
-            while (i < expanded_len) {
-                buffer[row * screen_width + start_col + i].Attributes = 8; // Dark gray for single-line comments
-                i++;
             }
         } else {
             i++;
         }
     }
 
-    // Apply syntax highlighting rules for other elements
+    // Подсветка ключевых слов и функций
     for (i = 0; i < syntax_rules_count; i++) {
         SyntaxRule rule = syntax_rules[i];
         char* ptr = strstr(expanded_line, rule.keyword);
+        
         while (ptr != NULL) {
             int index = ptr - expanded_line;
             int keyword_len = strlen(rule.keyword);
-            for (int j = 0; j < keyword_len; j++) {
-                buffer[row * screen_width + start_col + index + j].Attributes = rule.color;
+
+            // Проверяем, что это функция (слово + открывающая скобка)
+            if ((index == 0 || isspace(expanded_line[index - 1])) && 
+                index + keyword_len < expanded_len && expanded_line[index + keyword_len] == '(') {
+                // Подсвечиваем функцию
+                for (int j = 0; j < keyword_len; j++) {
+                    buffer[row * screen_width + start_col + index + j].Attributes = 14; // Светло-синий для функций
+                }
             }
-            ptr = strstr(ptr + keyword_len, rule.keyword);
+
+            // Проверяем, что слово ключевое
+            if ((index == 0 || isspace(expanded_line[index - 1])) && 
+                (index + keyword_len == expanded_len || isspace(expanded_line[index + keyword_len]))) {
+                // Подсвечиваем ключевое слово
+                for (int j = 0; j < keyword_len; j++) {
+                    buffer[row * screen_width + start_col + index + j].Attributes = rule.color;
+                }
+            }
+            ptr = strstr(ptr + 1, rule.keyword); // Продолжаем поиск
         }
     }
 
-    // Highlight numbers
+    // Подсветка блоков if
+    for (i = 0; i < expanded_len; i++) {
+        if (expanded_line[i] == 'i' && i + 1 < expanded_len && expanded_line[i + 1] == 'f' && 
+            (i == 0 || isspace(expanded_line[i - 1])) && 
+            i + 2 < expanded_len && expanded_line[i + 2] == '(') {
+            int start = i;
+            i += 3; // Пропускаем "if("
+            while (i < expanded_len && expanded_line[i] != ')') {
+                i++;
+            }
+            if (i < expanded_len) {
+                int end = i + 1; // Включаем закрывающую скобку
+                for (int j = start; j < end; j++) {
+                    buffer[row * screen_width + start_col + j].Attributes = 10; // Зеленый для блоков if
+                }
+            }
+        }
+    }
+
+    // Подсветка чисел
     i = 0;
     while (i < expanded_len) {
         if (isdigit(expanded_line[i])) {
@@ -164,14 +161,14 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
             }
             int end = i;
             for (int j = start; j < end; j++) {
-                buffer[row * screen_width + start_col + j].Attributes = 11; // Light blue for numbers
+                buffer[row * screen_width + start_col + j].Attributes = 11; // Светло-голубой для чисел
             }
         } else {
             i++;
         }
     }
 
-    // Highlight strings between double quotes
+    // Подсветка строк в двойных кавычках
     i = 0;
     while (i < expanded_len) {
         if (expanded_line[i] == '"') {
@@ -183,16 +180,14 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
             if (i < expanded_len) {
                 int end = i;
                 for (int j = start; j <= end; j++) {
-                    buffer[row * screen_width + start_col + j].Attributes = 12; // Red for strings
+                    buffer[row * screen_width + start_col + j].Attributes = 12; // Красный для строк
                 }
-                i++; // Move past the closing quote
             }
-        } else {
-            i++;
         }
+        i++;
     }
 
-    // Highlight strings between single quotes
+    // Подсветка строк в одинарных кавычках
     i = 0;
     while (i < expanded_len) {
         if (expanded_line[i] == '\'') {
@@ -204,16 +199,14 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
             if (i < expanded_len) {
                 int end = i;
                 for (int j = start; j <= end; j++) {
-                    buffer[row * screen_width + start_col + j].Attributes = 13; // Magenta for single-quoted strings
+                    buffer[row * screen_width + start_col + j].Attributes = 13; // Пурпурный для строк в одинарных кавычках
                 }
-                i++; // Move past the closing quote
             }
-        } else {
-            i++;
         }
+        i++;
     }
 
-    // Copy the expanded line content into the buffer
+    // Копируем содержимое расширенной строки в буфер
     for (i = 0; i < expanded_len; i++) {
         buffer[row * screen_width + start_col + i].Char.AsciiChar = expanded_line[i];
     }
@@ -459,7 +452,7 @@ int main(int argc, char* argv[]) {
 
     init_console();
     get_console_size();
-    clear_console(); // Clear console on startup
+    clear_console(); 
 
     // Определение расширения файла
     char* filename = argv[1];
@@ -556,10 +549,10 @@ int main(int argc, char* argv[]) {
     }
     fclose(file);
 
-    max_line_number_length = calculate_max_line_number_length();
+    max_line_number_length = max_line_number_length;
     fill_console_buffer(); // Изначальная отрисовка
 
-    while (1) {
+    while (true) {
         int c = _getch();
         if (c == 0 || c == 224) { // Обработка стрелок и других расширенных клавиш
             c = _getch();
@@ -632,7 +625,7 @@ int main(int argc, char* argv[]) {
     cursorInfo.bVisible = TRUE;
     SetConsoleCursorInfo(hConsole, &cursorInfo);
 
-    clear_console(); // Очистка экрана перед выходом
+    clear_console(); 
 
     cleanup_lines(); // Освобождение ресурсов перед выходом
 
