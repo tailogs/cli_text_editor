@@ -2,7 +2,7 @@
 
 ## Изображение
 
-![image](https://github.com/user-attachments/assets/2d6cfc2b-f8c3-4d6e-b1da-06771e965f74) <br> Рисунок 1. Интерфейс программы
+![image](https://github.com/user-attachments/assets/e895d593-1032-4f74-8592-85a0b85be659) <br> Рисунок 1. Интерфейс программы
 
 ## Описание
 
