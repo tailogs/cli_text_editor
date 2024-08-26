@@ -111,21 +111,22 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
             int index = ptr - expanded_line;
             int keyword_len = strlen(rule.keyword);
 
-            // Проверяем, что это функция (слово + открывающая скобка)
-            if ((index == 0 || isspace(expanded_line[index - 1])) && 
-                index + keyword_len < expanded_len && expanded_line[index + keyword_len] == '(') {
-                // Подсвечиваем функцию
-                for (int j = 0; j < keyword_len; j++) {
-                    buffer[row * screen_width + start_col + index + j].Attributes = 14; // Светло-синий для функций
-                }
-            }
+            // Проверяем, что ключевое слово не является частью другого слова
+            bool is_start_valid = (index == 0 || !isalnum(expanded_line[index - 1]));
+            bool is_end_valid = (index + keyword_len >= expanded_len || !isalnum(expanded_line[index + keyword_len]));
 
-            // Проверяем, что слово ключевое
-            if ((index == 0 || isspace(expanded_line[index - 1])) && 
-                (index + keyword_len == expanded_len || isspace(expanded_line[index + keyword_len]))) {
-                // Подсвечиваем ключевое слово
-                for (int j = 0; j < keyword_len; j++) {
-                    buffer[row * screen_width + start_col + index + j].Attributes = rule.color;
+            if (is_start_valid && is_end_valid) {
+                // Проверяем, что это функция (слово + открывающая скобка)
+                if (index + keyword_len < expanded_len && expanded_line[index + keyword_len] == '(') {
+                    // Подсвечиваем функцию
+                    for (int j = 0; j < keyword_len; j++) {
+                        buffer[row * screen_width + start_col + index + j].Attributes = 14; // Светло-синий для функций
+                    }
+                } else {
+                    // Подсвечиваем ключевое слово
+                    for (int j = 0; j < keyword_len; j++) {
+                        buffer[row * screen_width + start_col + index + j].Attributes = rule.color;
+                    }
                 }
             }
             ptr = strstr(ptr + 1, rule.keyword); // Продолжаем поиск
