@@ -50,7 +50,7 @@ void get_console_size() {
     screen_height = csbi.srWindow.Bottom - csbi.srWindow.Top + 1 - 1; // Reserve 1 line for status
 }
 
-void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int start_col) {
+void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int start_col, SyntaxRule* syntax_rules, int syntax_rules_count) {
     int line_len = strlen(line);
     int i;
 
@@ -76,7 +76,7 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
         buffer[row * screen_width + start_col + i].Attributes = 15; // Белый текст
     }
 
-    // Определим комментарии и их диапазоны
+    // Определяем комментарии и их диапазоны
     typedef struct {
         int start;
         int end;
@@ -126,14 +126,14 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
     for (i = 0; i < syntax_rules_count; i++) {
         SyntaxRule rule = syntax_rules[i];
         char* ptr = strstr(expanded_line, rule.keyword);
-        
+
         while (ptr != NULL) {
             int index = ptr - expanded_line;
             int keyword_len = strlen(rule.keyword);
 
             // Проверяем, что ключевое слово не является частью другого слова
-            bool is_start_valid = (index == 0 || !isalnum(expanded_line[index - 1]));
-            bool is_end_valid = (index + keyword_len >= expanded_len || !isalnum(expanded_line[index + keyword_len]));
+            bool is_start_valid = (index == 0 || (!isalnum(expanded_line[index - 1]) && expanded_line[index - 1] != '_'));
+            bool is_end_valid = (index + keyword_len >= expanded_len || (!isalnum(expanded_line[index + keyword_len]) && expanded_line[index + keyword_len] != '_'));
 
             // Проверяем, что ключевое слово не находится в комментарии
             bool in_comment = false;
@@ -149,7 +149,7 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
                 if (index + keyword_len < expanded_len && expanded_line[index + keyword_len] == '(') {
                     // Подсвечиваем функцию
                     for (int j = 0; j < keyword_len; j++) {
-                        buffer[row * screen_width + start_col + index + j].Attributes = 14; // Светло-синий для функций
+                        buffer[row * screen_width + start_col + index + j].Attributes = COLOR_FUNCTION; // Светло-синий для функций
                     }
                 } else {
                     // Подсвечиваем ключевое слово
@@ -158,14 +158,14 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
                     }
                 }
             }
-            ptr = strstr(ptr + 1, rule.keyword); // Продолжаем поиск
+            ptr = strstr(ptr + keyword_len, rule.keyword); // Продолжаем поиск с нового места
         }
     }
 
     // Подсветка блоков if
     for (i = 0; i < expanded_len; i++) {
         if (expanded_line[i] == 'i' && i + 1 < expanded_len && expanded_line[i + 1] == 'f' && 
-            (i == 0 || isspace(expanded_line[i - 1])) && 
+            (i == 0 || isspace(expanded_line[i - 1]) || expanded_line[i - 1] == '_') && 
             i + 2 < expanded_len && expanded_line[i + 2] == '(') {
             int start = i;
             i += 3; // Пропускаем "if("
@@ -277,7 +277,7 @@ void fill_console_buffer() {
         start_col += strlen(line_num_str) + 3; // Space for number and additional padding
 
         // Apply syntax highlighting to line text (excluding line numbers)
-        apply_syntax_highlighting(lines[i], buffer, i, start_col);
+        apply_syntax_highlighting(lines[i], buffer, i, start_col, syntax_rules, syntax_rules_count);
 
         // Highlight current line
         if (i == current_line) {
@@ -292,14 +292,23 @@ void fill_console_buffer() {
     COORD bufferCoord = {0, 0};
     WriteConsoleOutput(hConsole, buffer, bufferSize, bufferCoord, &writeRegion);
 
-    // Draw the cursor with red underscore
+    // Draw the cursor with white character and black background
     int cursorX = current_col + max_line_number_length + 3;
     int cursorY = current_line - top_line;
     if (cursorX < screen_width && cursorY < num_lines) {
         int index = cursorY * screen_width + cursorX;
-        buffer[index].Char.AsciiChar = '_'; // Draw a red underscore for cursor
-        buffer[index].Attributes = 12; // Red color
+
+        // Save the original character at the cursor position
+        CHAR_INFO cursor_char = buffer[index];
+        
+        // Set the character color to white and background to black for the cursor
+        buffer[index].Attributes = 0x0F; // White on black
+
+        // Write the buffer to the console again to draw the cursor
         WriteConsoleOutput(hConsole, buffer, bufferSize, bufferCoord, &writeRegion);
+        
+        // Restore the original character at the cursor position
+        buffer[index] = cursor_char;
     }
 
     // Clean up

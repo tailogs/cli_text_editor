@@ -45,7 +45,7 @@ void add_syntax_rules_c_and_cpp() {
         "OVERLAPPED", "WSADATA", "SOCKADDR_IN", "SOCKADDR", "RECT", "POINT", 
         "MSG", "BITMAPINFO", "DEVMODE", "LOGFONT", "PAINTSTRUCT", "HFILE", 
         "HHOOK", "DWORD", "WORD", "BYTE", "BOOL", "LPVOID", "LPCSTR", "LPCWSTR", 
-        "LPWSTR", "LRESULT", "WPARAM", "LPARAM"
+        "LPWSTR", "LRESULT", "WPARAM", "LPARAM", "CHAR_INFO", "LC_ALL", "FILE", "SyntaxRule"
     };
     
     const char* functions[] = {
@@ -92,7 +92,8 @@ void add_syntax_rules_c_and_cpp() {
         "SetConsoleCursorPosition", "WriteConsole", "ReadConsole", "CreateFile", 
         "CloseHandle", "ReadFile", "WriteFile", "CreateProcess", "GetLastError", 
         "SetLastError", "MessageBox", "DefWindowProc", "PostMessage", "SendMessage",
-        "GetStdHandle"
+        "GetStdHandle", "WriteConsoleOutput", "FillConsoleOutputCharacter", "FillConsoleOutputAttribute",
+        "SetConsoleOutputCP", "SetConsoleCP", "setlocale"
     };
 
     
