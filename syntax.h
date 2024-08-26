@@ -24,18 +24,19 @@ enum AvailableColors {
 // Определение цветов
 enum Color {
     COLOR_KEYWORD = LIGHT_GREEN,
-    COLOR_FUNCTION = LIGHT_YELLOW,
+    COLOR_FUNCTION = LIGHT_MAGENTA,
     COLOR_STRING = MAGENTA,
     COLOR_NUMBER = LIGHT_CYAN,
     COLOR_COMMENT = DARK_GRAY,
     COLOR_HEADER = LIGHT_BLUE,
-    COLOR_INCLUDE = LIGHT_BLUE
+    COLOR_INCLUDE = LIGHT_BLUE,
+    COLOR_MACROS = LIGHT_YELLOW
 };
 
 #define NUM_KEYWORDS 20
 #define NUM_FUNCTIONS 15
 #define NUM_HEADERS 15
-#define MAX_SYNTAX_RULES 100
+#define MAX_SYNTAX_RULES 100000
 
 // Syntax highlighting rules
 typedef struct {

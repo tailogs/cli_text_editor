@@ -27,15 +27,25 @@ void add_syntax_rules(const char* rules[], int color, int num_rules) {
 void add_syntax_rules_c_and_cpp() {
     const char* keywords[] = {
         "do", "int", "return", "for", "while", "if", "else", "class", "public", "private", 
-        "protected", "struct", "namespace", "template", "void", "static", "auto", "const", 
+        "protected", "struct", "namespace", "template", "void", "static", "auto", "const", "size_t",
         "sizeof", "true", "false", "NULL", "break", "continue", "switch", "case", "default", 
-        "typedef", "volatile", "extern", "register", "union", "goto", "long", "short", 
+        "typedef", "volatile", "extern", "register", "union", "goto", "long", "short",
         "char", "float", "double", "unsigned", "signed", "size_t", "this", "virtual", 
         "override", "final", "noexcept", "decltype", "constexpr", "thread_local", 
         "alignas", "alignof", "static_assert", "dynamic_cast", "static_cast", "const_cast", 
         "reinterpret_cast", "requires", "concept", "co_return", "co_yield", "co_await", 
         "import", "module", "export", "char8_t", "char16_t", "char32_t", "constexpr", 
-        "consteval", "constinit", "decltype", "explicit", "inline", "module"
+        "consteval", "constinit", "decltype", "explicit", "inline", "module",
+        "bool", "wchar_t", "std::string", "std::wstring", "std::byte", "std::nullptr_t", 
+        "std::span", "std::array", "std::deque", "std::unordered_map", "std::unordered_set", 
+        "std::optional", "std::variant", "ptrdiff_t", "HANDLE", "HWND", "HINSTANCE", "HDC",
+        "HBRUSH", "HPEN", "HMENU", "HICON", "HBITMAP", "HCURSOR", "HGLRC",
+        "CONSOLE_CURSOR_INFO", "CONSOLE_SCREEN_BUFFER_INFO", "COORD", "SMALL_RECT", 
+        "INPUT_RECORD", "SECURITY_ATTRIBUTES", "STARTUPINFO", "PROCESS_INFORMATION",
+        "OVERLAPPED", "WSADATA", "SOCKADDR_IN", "SOCKADDR", "RECT", "POINT", 
+        "MSG", "BITMAPINFO", "DEVMODE", "LOGFONT", "PAINTSTRUCT", "HFILE", 
+        "HHOOK", "DWORD", "WORD", "BYTE", "BOOL", "LPVOID", "LPCSTR", "LPCWSTR", 
+        "LPWSTR", "LRESULT", "WPARAM", "LPARAM"
     };
     
     const char* functions[] = {
@@ -75,7 +85,14 @@ void add_syntax_rules_c_and_cpp() {
         "std::chrono::microseconds", "chrono::microseconds", "microseconds",
         "std::chrono::nanoseconds", "chrono::nanoseconds", "nanoseconds",
         "std::tuple", "tuple", "std::get", "get", 
-        "std::apply", "apply"
+        "std::apply", "apply",
+
+        // Windows API функции
+        "GetConsoleCursorInfo", "SetConsoleCursorInfo", "GetConsoleScreenBufferInfo", 
+        "SetConsoleCursorPosition", "WriteConsole", "ReadConsole", "CreateFile", 
+        "CloseHandle", "ReadFile", "WriteFile", "CreateProcess", "GetLastError", 
+        "SetLastError", "MessageBox", "DefWindowProc", "PostMessage", "SendMessage",
+        "GetStdHandle"
     };
 
     
@@ -159,8 +176,10 @@ void add_syntax_rules_c_and_cpp() {
     };
     
     const char* include__[] = { "#include" };
+    const char* define__[] = { "#define" };
     
     add_syntax_rules(include__, COLOR_INCLUDE, sizeof(include__) / sizeof(include__[0]));
+    add_syntax_rules(define__, COLOR_MACROS, sizeof(define__) / sizeof(define__[0]));
     add_syntax_rules(headers, COLOR_HEADER, sizeof(headers) / sizeof(headers[0]));
     add_syntax_rules(keywords, COLOR_KEYWORD, sizeof(keywords) / sizeof(keywords[0]));
     add_syntax_rules(functions, COLOR_FUNCTION, sizeof(functions) / sizeof(functions[0]));

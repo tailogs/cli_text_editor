@@ -76,20 +76,40 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
         buffer[row * screen_width + start_col + i].Attributes = 15; // Белый текст
     }
 
-    // Применяем правила подсветки для комментариев
+    // Определим комментарии и их диапазоны
+    typedef struct {
+        int start;
+        int end;
+        bool is_multiline;
+    } CommentRange;
+
+    CommentRange comments[2048];
+    int num_comments = 0;
+
     i = 0;
     while (i < expanded_len) {
         // Обработка однострочных комментариев
         if (expanded_line[i] == '/' && i + 1 < expanded_len && (expanded_line[i + 1] == '/' || expanded_line[i + 1] == '*')) {
             if (expanded_line[i + 1] == '/') {
+                // Записываем комментарий
+                comments[num_comments].start = i;
+                comments[num_comments].end = expanded_len;
+                comments[num_comments].is_multiline = false;
+                num_comments++;
                 while (i < expanded_len) {
                     buffer[row * screen_width + start_col + i].Attributes = 8; // Темно-серый для однострочных комментариев
                     i++;
                 }
             } else if (expanded_line[i + 1] == '*') {
+                // Записываем начало многострочного комментария
+                comments[num_comments].start = i;
+                comments[num_comments].is_multiline = true;
                 i += 2; // Пропускаем "/*"
                 while (i < expanded_len) {
                     if (expanded_line[i] == '*' && i + 1 < expanded_len && expanded_line[i + 1] == '/') {
+                        // Записываем конец многострочного комментария
+                        comments[num_comments].end = i + 2;
+                        num_comments++;
                         i += 2; // Пропускаем "*/"
                         break;
                     }
@@ -115,7 +135,16 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
             bool is_start_valid = (index == 0 || !isalnum(expanded_line[index - 1]));
             bool is_end_valid = (index + keyword_len >= expanded_len || !isalnum(expanded_line[index + keyword_len]));
 
-            if (is_start_valid && is_end_valid) {
+            // Проверяем, что ключевое слово не находится в комментарии
+            bool in_comment = false;
+            for (int j = 0; j < num_comments; j++) {
+                if (index >= comments[j].start && index < comments[j].end) {
+                    in_comment = true;
+                    break;
+                }
+            }
+
+            if (!in_comment && is_start_valid && is_end_valid) {
                 // Проверяем, что это функция (слово + открывающая скобка)
                 if (index + keyword_len < expanded_len && expanded_line[index + keyword_len] == '(') {
                     // Подсвечиваем функцию
