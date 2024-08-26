@@ -81,25 +81,89 @@ void add_syntax_rules_c_and_cpp() {
     
     const char* headers[] = {
         // C стандартные заголовочные файлы
-        "<stdio.h>", "<stdlib.h>", "<string.h>", "<conio.h>", "<windows.h>", 
+        "<stdio.h>",    // Ввод/вывод
+        "<stdlib.h>",   // Общие утилиты
+        "<string.h>",   // Строковые операции
+        "<conio.h>",    // Консольные ввод/вывод (не стандартный заголовочный файл, но часто используется)
+        "<windows.h>",  // Заголовок для Windows API (опционально, зависит от платформы)
+        "<errno.h>",    // Обработка ошибок
+        "<ctype.h>",    // Символьные операции
+        "<math.h>",     // Математические функции
+        "<float.h>",    // Параметры представления чисел с плавающей точкой
+        "<limits.h>",   // Ограничения на числовые типы
+        "<stdarg.h>",   // Обработка переменного числа аргументов
+        "<stddef.h>",   // Определения типов
+        "<stdint.h>",   // Определения стандартных целочисленных типов
+        "<signal.h>",   // Обработка сигналов
+        "<setjmp.h>",   // Установка и восстановление состояния
+        "<time.h>",     // Определение времени и даты
+        "<tgmath.h>",   // Обобщенные математические функции
+        "<iso646.h>",   // Определения для альтернативных символов
+        "<wchar.h>",    // Поддержка широких символов
+        "<wctype.h>",   // Функции для обработки широких символов
+        "<locale.h>",   // Локализация
+        "<uchar.h>",    // Поддержка символов Unicode (в C11) 
+        "<stdbool.h",   // Булевый тип данных 
 
         // C++ стандартные заголовочные файлы
-        "<iostream>", "<fstream>", "<sstream>", "<vector>", "<map>", "<set>", "<list>", 
-        "<algorithm>", "<cassert>", "<cctype>", "<cfloat>", "<climits>", "<cstdarg>", 
-        "<cstddef>", "<cstdio>", "<cstdlib>", "<cstring>", "<cwchar>", "<cwctype>", 
-        "<locale>", "<new>", "<typeinfo>", "<utility>", "<bitset>", "<complex>", 
-        "<exception>", "<functional>", "<future>", "<initializer_list>", "<iterator>", 
-        "<mutex>", "<random>", "<ratio>", "<regex>", "<system_error>", "<thread>", 
-        "<tuple>", "<typeindex>", "<utility>", "<chrono>", "<atomic>", "<shared_mutex>", 
-        "<shared_lock>", "<lock_guard>", "<unique_lock>", "<memory>", "<filesystem>", 
-        "<numbers>", "<format>", "<ranges>", "<concepts>"
+        "<iostream>",            // Стандартный поток ввода/вывода
+        "<fstream>",             // Файловый ввод/вывод
+        "<sstream>",             // Строковый поток ввода/вывода
+        "<vector>",              // Вектор
+        "<map>",                 // Ассоциативный контейнер "словарь"
+        "<set>",                 // Ассоциативный контейнер "множество"
+        "<list>",                // Двусвязный список
+        "<algorithm>",           // Алгоритмы
+        "<cassert>",            // Макросы для отладки
+        "<cctype>",              // Символьные функции (C-совместимые)
+        "<cfloat>",              // Параметры представления чисел с плавающей точкой (C-совместимые)
+        "<climits>",             // Ограничения на числовые типы (C-совместимые)
+        "<cstdarg>",             // Обработка переменного числа аргументов (C-совместимые)
+        "<cstddef>",             // Определения типов и макросов (C-совместимые)
+        "<cstdio>",              // Стандартный ввод/вывод (C-совместимые)
+        "<cstdlib>",             // Общие утилиты (C-совместимые)
+        "<cstring>",             // Строковые операции (C-совместимые)
+        "<cwchar>",              // Поддержка широких символов (C++)
+        "<cwctype>",             // Функции для обработки широких символов (C++)
+        "<locale>",              // Локализация
+        "<new>",                 // Операции выделения и освобождения памяти
+        "<typeinfo>",            // Информация о типах
+        "<utility>",             // Утилиты, такие как пары и обмен значениями
+        "<bitset>",              // Массив битов
+        "<complex>",             // Комплексные числа
+        "<exception>",           // Обработка исключений
+        "<functional>",          // Функциональные объекты
+        "<future>",              // Асинхронные операции
+        "<initializer_list>",    // Список инициализации
+        "<iterator>",            // Итераторы
+        "<mutex>",               // Мьютексы и синхронизация
+        "<random>",              // Генерация случайных чисел
+        "<ratio>",               // Соотношения
+        "<regex>",               // Регулярные выражения
+        "<system_error>",        // Ошибки системы
+        "<thread>",              // Потоки
+        "<tuple>",               // Кортежи
+        "<typeindex>",           // Индексация типов
+        "<chrono>",              // Хронология и временные интервалы
+        "<atomic>",              // Атомарные операции
+        "<shared_mutex>",        // Мьютексы с поддержкой совместного доступа
+        "<shared_lock>",         // Разделяемый захват блокировки
+        "<lock_guard>",          // Автоматическое управление блокировкой
+        "<unique_lock>",         // Уникальный захват блокировки
+        "<memory>",              // Управление памятью
+        "<filesystem>",          // Работа с файловой системой
+        "<numbers>",             // Числовые функции
+        "<format>",              // Форматирование строк
+        "<ranges>",              // Диапазоны
+        "<concepts>"             // Концепции
     };
-
     
+    const char* include__[] = { "#include" };
+    
+    add_syntax_rules(include__, COLOR_INCLUDE, sizeof(include__) / sizeof(include__[0]));
+    add_syntax_rules(headers, COLOR_HEADER, sizeof(headers) / sizeof(headers[0]));
     add_syntax_rules(keywords, COLOR_KEYWORD, sizeof(keywords) / sizeof(keywords[0]));
     add_syntax_rules(functions, COLOR_FUNCTION, sizeof(functions) / sizeof(functions[0]));
-    add_syntax_rules(headers, COLOR_HEADER, sizeof(headers) / sizeof(headers[0]));
-    add_syntax_rule("#include", COLOR_INCLUDE);
 }
 
 void add_syntax_rules_python() {

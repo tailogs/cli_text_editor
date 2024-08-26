@@ -1,15 +1,35 @@
 #ifndef SYNTAX_H
 #define SYNTAX_H
 
+// Перечисление со всеми доступными цветами
+enum AvailableColors {
+    BLACK = 0,
+    BLUE = 1,
+    GREEN = 2,
+    CYAN = 3,
+    RED = 4,
+    MAGENTA = 5,
+    BROWN = 6,
+    LIGHT_GRAY = 7,
+    DARK_GRAY = 8,
+    LIGHT_GREEN = 9,
+    LIGHT_CYAN = 10,
+    LIGHT_RED = 11,
+    LIGHT_MAGENTA = 12,
+    LIGHT_BLUE = 13,
+    LIGHT_YELLOW = 14,
+    WHITE = 15
+};
+
 // Определение цветов
 enum Color {
-    COLOR_KEYWORD = 10,  // Зеленый
-    COLOR_FUNCTION = 14, // Светло-синий
-    COLOR_STRING = 12,   // Красный
-    COLOR_NUMBER = 11,   // Светло-голубой
-    COLOR_COMMENT = 8,   // Темно-серый
-    COLOR_HEADER = 9,    // Светло-зеленый
-    COLOR_INCLUDE = 13   // Фиолетовый
+    COLOR_KEYWORD = LIGHT_GREEN,
+    COLOR_FUNCTION = LIGHT_YELLOW,
+    COLOR_STRING = MAGENTA,
+    COLOR_NUMBER = LIGHT_CYAN,
+    COLOR_COMMENT = DARK_GRAY,
+    COLOR_HEADER = LIGHT_BLUE,
+    COLOR_INCLUDE = LIGHT_BLUE
 };
 
 #define NUM_KEYWORDS 20
