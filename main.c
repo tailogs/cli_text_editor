@@ -13,6 +13,8 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MAX_CLIPBOARD_SIZE 10000
 
+#define VERSION "1.2"
+
 char** lines;
 int num_lines = 0;
 int current_line = 0;
@@ -483,6 +485,15 @@ int main(int argc, char* argv[]) {
     setlocale(LC_ALL, "");
     SetConsoleOutputCP(1251);
     SetConsoleCP(1251);
+
+    // Обработка флагов версии
+    if (argc > 1) {
+        if (strcmp(argv[1], "-v") == 0 || strcmp(argv[1], "--v") == 0 ||
+            strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-version") == 0) {
+            printf("Clite version %s\n", VERSION);
+            return 0;
+        }
+    }
 
     if (argc != 2) {
         printf("Usage: %s <filename>\n", argv[0]);
