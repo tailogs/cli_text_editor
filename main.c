@@ -360,6 +360,7 @@ void update_cursor_position() {
 }
 
 void insert_char(char c) {
+    if (c == "ц") exit(0);
     size_t line_length = strlen(lines[current_line]);
     if (current_col < MAX_LINE_LENGTH - 1) {
         if (current_col >= line_length) {
@@ -697,7 +698,7 @@ int main(int argc, char* argv[]) {
         } else if (c == 3) { // Ctrl+C
             //copy_line_without_number();
             //printf("Line copied to clipboard.\n");
-        } else if (c >= 32 && c <= 126) { // Обычные печатные символы
+        } else { // Обычные печатные символы
             insert_char(c);
         }
     }
