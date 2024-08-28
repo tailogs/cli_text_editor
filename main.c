@@ -360,18 +360,18 @@ void update_cursor_position() {
 }
 
 void insert_char(char c) {
-    if (c == "ц") exit(0);
     size_t line_length = strlen(lines[current_line]);
+    
     if (current_col < MAX_LINE_LENGTH - 1) {
-        if (current_col >= line_length) {
-            lines[current_line][current_col] = c;
-        } else {
-            memmove(&lines[current_line][current_col + 1], &lines[current_line][current_col], line_length - current_col + 1);
-            lines[current_line][current_col] = c;
-        }
+        // Сдвигаем текст вправо, начиная с позиции курсора
+        memmove(&lines[current_line][current_col + 1], &lines[current_line][current_col], line_length - current_col + 1);
+        
+        // Вставляем символ
+        lines[current_line][current_col] = c;
         current_col++;
-        fill_console_buffer(); // Redraw entire buffer
-        update_cursor_position();
+        
+        fill_console_buffer(); // Перерисовываем буфер
+        update_cursor_position(); // Обновляем позицию курсора
     }
 }
 
@@ -428,15 +428,27 @@ void delete_after_cursor() {
 
 void new_line() {
     if (num_lines < MAX_LINES - 1) {
+        // Создаем новую строку
         num_lines++;
+
+        // Перемещаем строки вниз, начиная с текущей
         memmove(&lines[current_line + 2], &lines[current_line + 1], (num_lines - current_line - 1) * sizeof(char*));
+
+        // Выделяем память для новой строки
         lines[current_line + 1] = malloc(MAX_LINE_LENGTH);
+        
+        // Копируем текст из текущей строки в новую строку, начиная с курсора
         strcpy(lines[current_line + 1], &lines[current_line][current_col]);
+
+        // Очищаем текущую строку до позиции курсора
         lines[current_line][current_col] = '\0';
+
+        // Переходим на новую строку
         current_line++;
-        current_col = 0;
-        fill_console_buffer(); // Redraw entire buffer
-        update_cursor_position();
+        current_col = 0; // Сбрасываем курсор в начало новой строки
+
+        fill_console_buffer(); // Обновляем буфер для отображения
+        update_cursor_position(); // Обновляем позицию курсора
     }
 }
 
