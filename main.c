@@ -451,11 +451,11 @@ void save_file(const char* filename) {
         set_cursor_position(0, screen_height);
 
         wchar_t text[] = L"File saved successfully.";
-        centerText(text);  // Выводим текст в центр консоли
+        centerText(text, TXT_GREEN, BACK_BLACK);  // Выводим текст в центр консоли
     } else {
         set_cursor_position(0, screen_height);
         wchar_t text[] = L"Error saving file.";
-        centerText(text);  // Выводим текст в центр консоли
+        centerText(text, TXT_RED, BACK_BLACK);  // Выводим текст в центр консоли
     }
     Sleep(500);
 

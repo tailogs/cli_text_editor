@@ -8,12 +8,13 @@
 #include <fcntl.h>
 #include <windows.h>
 #include <conio.h>
+#include "syntax.h"
 
 // Устанавливает символ в указанную позицию на экране
-void setPixel(int x, int y, wchar_t symbol);
+void setPixel(int x, int y, wchar_t symbol, const char* text_color, const char* background_color);
 
 // Выводит текст в центр консоли
-void centerText(wchar_t *text);
+void centerText(wchar_t *text, const char* text_color, const char* background_color);
 
 // Очищает консоль
 void clearConsole();

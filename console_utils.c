@@ -1,24 +1,17 @@
-#include <stdio.h>
-#include <wchar.h>
-#include <locale.h>
-#include <io.h>
-#include <fcntl.h>
-#include <windows.h>
-#include <conio.h>
 #include "console_utils.h"
 
 // Устанавливаем символ в указанную позицию на экране
-void setPixel(int x, int y, wchar_t symbol) {
+void setPixel(int x, int y, wchar_t symbol, const char* text_color, const char* background_color) {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     COORD position = {x, y};
 
     SetConsoleCursorPosition(hConsole, position);
     _setmode(_fileno(stdout), _O_U16TEXT);
-    wprintf(L"%lc", symbol);
+    wprintf(L"\033[0;%s;%sm%lc%s", text_color, background_color, symbol, CMD_RESET_COLOR);
 }
 
 // Вывод текста в центр консоли
-void centerText(wchar_t *text) {
+void centerText(wchar_t *text, const char* text_color, const char* background_color) {
     int textLength = wcslen(text);
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -35,7 +28,7 @@ void centerText(wchar_t *text) {
     _setmode(_fileno(stdout), _O_U16TEXT);
 
     for (int i = 0; i < textLength; i++) {
-        setPixel(leftPadding + i, topPadding, text[i]);
+        setPixel(leftPadding + i, topPadding, text[i], text_color, background_color);
     }
 }
 
