@@ -1,24 +1,82 @@
 #ifndef SYNTAX_H
 #define SYNTAX_H
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <windows.h>
+
+// Цвет текста
+#define TXT_BLACK "30"
+#define TXT_RED "31"
+#define TXT_GREEN "32"
+#define TXT_YELLOW "33"
+#define TXT_BLUE "34"
+#define TXT_MAGENTA "35"
+#define TXT_CYAN "36"
+#define TXT_WHITE "37"
+
+// Цвет фона
+#define BACK_BLACK "40"
+#define BACK_RED "41"
+#define BACK_GREEN "42"
+#define BACK_YELLOW "43"
+#define BACK_BLUE "44"
+#define BACK_MAGENTA "45"
+#define BACK_CYAN "46"
+#define BACK_WHITE "47"
+
+// Яркий цвет текста
+#define TXT_LIGHT_RED "1;31"
+#define TXT_LIGHT_GREEN "1;32"
+#define TXT_LIGHT_YELLOW "1;33"
+#define TXT_LIGHT_BLUE "1;34"
+#define TXT_LIGHT_MAGENTA "1;35"
+#define TXT_LIGHT_CYAN "1;36"
+#define TXT_LIGHT_WHITE "1;37"
+
+// Яркий цвет фона
+#define BACK_LIGHT_RED "1;41"
+#define BACK_LIGHT_GREEN "1;42"
+#define BACK_LIGHT_YELLOW "1;43"
+#define BACK_LIGHT_BLUE "1;44"
+#define BACK_LIGHT_MAGENTA "1;45"
+#define BACK_LIGHT_CYAN "1;46"
+#define BACK_LIGHT_WHITE "1;47"
+
+// Комбинированный макрос для текста и фона
+#define TXT_ON_BACK(TEXT_COLOR, BACKGROUND_COLOR) "\033[0;" TEXT_COLOR ";" BACKGROUND_COLOR "m"
+
+// Макросы для одиночного применения цвета
+#define TXT_ONLY(TEXT_COLOR) "\033[0;" TEXT_COLOR "m"
+#define BACK_ONLY(BACKGROUND_COLOR) "\033[0;" TEXT_WHITE ";" BACKGROUND_COLOR "m"
+
+// Сброс цвета
+#define CMD_RESET_COLOR "\033[0m"
+
+// Функция для включения поддержки ANSI-кодов в Windows
+void enableVirtualTerminalProcessing(HANDLE hConsole);
+void print_colored_symbol_and_text(const char* symbol, const char* symbol_text_color, const char* symbol_background_color, 
+                                    const char* main_text, const char* main_text_color, const char* main_background_color);
+
 // Перечисление со всеми доступными цветами
 enum AvailableColors {
     BLACK = 0,
-    BLUE = 1,
+    RED = 1,
     GREEN = 2,
-    CYAN = 3,
-    RED = 4,
+    YELLOW = 3,
+    BLUE = 4,
     MAGENTA = 5,
-    BROWN = 6,
-    LIGHT_GRAY = 7,
+    CYAN = 6,
+    WHITE = 7,
     DARK_GRAY = 8,
-    LIGHT_GREEN = 9,
-    LIGHT_CYAN = 10,
-    LIGHT_RED = 11,
-    LIGHT_MAGENTA = 12,
-    LIGHT_BLUE = 13,
-    LIGHT_YELLOW = 14,
-    WHITE = 15
+    LIGHT_RED = 9,
+    LIGHT_GREEN = 10,
+    LIGHT_YELLOW = 11,
+    LIGHT_BLUE = 12,
+    LIGHT_MAGENTA = 13,
+    LIGHT_CYAN = 14,
+    LIGHT_WHITE = 15
 };
 
 // Определение цветов

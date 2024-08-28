@@ -6,6 +6,7 @@
 #include <locale.h>
 #include <stdbool.h>
 #include "syntax.h"
+#include "console_utils.h"
 
 #define MAX_LINES 10000
 #define MAX_LINE_LENGTH 1000
@@ -13,7 +14,7 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MAX_CLIPBOARD_SIZE 10000
 
-#define VERSION "1.2"
+#define VERSION "1.2.1"
 
 char** lines;
 int num_lines = 0;
@@ -440,17 +441,29 @@ void new_line() {
 
 void save_file(const char* filename) {
     FILE* file = fopen(filename, "w");
+    clearConsole();  // Очищаем экран перед выводом текста
+    hideCursor();    // Прячем курсор
     if (file) {
         for (int i = 0; i < num_lines; i++) {
             fprintf(file, "%s\n", lines[i]);
         }
         fclose(file);
         set_cursor_position(0, screen_height);
-        printf("File saved successfully.");
+
+        wchar_t text[] = L"File saved successfully.";
+        centerText(text);  // Выводим текст в центр консоли
     } else {
         set_cursor_position(0, screen_height);
-        printf("Error saving file.");
+        wchar_t text[] = L"Error saving file.";
+        centerText(text);  // Выводим текст в центр консоли
     }
+    Sleep(500);
+
+    // Очистка консоли и перерисовка интерфейса после паузы
+    clearConsole();
+    fill_console_buffer();
+    
+    showCursor();    // Показываем курсор перед завершением программы
 }
 
 void clear_console() {
@@ -485,18 +498,38 @@ int main(int argc, char* argv[]) {
     setlocale(LC_ALL, "");
     SetConsoleOutputCP(1251);
     SetConsoleCP(1251);
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    enableVirtualTerminalProcessing(hConsole);
 
     // Обработка флагов версии
     if (argc > 1) {
         if (strcmp(argv[1], "-v") == 0 || strcmp(argv[1], "--v") == 0 ||
             strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-version") == 0) {
-            printf("Clite version %s\n", VERSION);
+            printf(TXT_ONLY(TXT_GREEN) "-> VERSION:\n" CMD_RESET_COLOR);
+            printf(TXT_ONLY(TXT_GREEN) "    | CLITE VERSION: %s" CMD_RESET_COLOR, VERSION);
             return 0;
-        }
+        } else if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--h") == 0 ||
+            strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-help") == 0) {
+            printf(TXT_ONLY(TXT_MAGENTA));
+            printf("-> HELP:\n");
+            printf("    | DEVELOPER: TAILOGS\n");
+            printf("    | VERSION: %s\n", VERSION);
+            printf("    | COMMANDS:\n");
+            printf("        -h, --h, -help, --help\n");
+            printf("            | PRINT HELP\n");
+            printf("        -v, --v, -version, --version\n");
+            printf("            | PRINT VERSION");
+            printf(CMD_RESET_COLOR);
+            return 0;
+        } 
     }
 
     if (argc != 2) {
-        printf("Usage: %s <filename>\n", argv[0]);
+        char usage[100]; 
+        sprintf(usage, "     | Usage: %s <filename>", argv[0]);
+        print_colored_symbol_and_text("|", TXT_BLACK, BACK_WHITE, " -> ERROR:", TXT_LIGHT_WHITE, BACK_LIGHT_RED);
+        printf("\n");
+        print_colored_symbol_and_text(".", TXT_BLACK, BACK_WHITE, usage, TXT_LIGHT_WHITE, BACK_LIGHT_RED);
         return 1;
     }
 
@@ -662,8 +695,8 @@ int main(int argc, char* argv[]) {
         } else if (c == 17) { // Ctrl+Q
             break;
         } else if (c == 3) { // Ctrl+C
-            copy_line_without_number();
-            printf("Line copied to clipboard.\n");
+            //copy_line_without_number();
+            //printf("Line copied to clipboard.\n");
         } else if (c >= 32 && c <= 126) { // Обычные печатные символы
             insert_char(c);
         }

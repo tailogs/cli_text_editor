@@ -1,0 +1,84 @@
+#include <stdio.h>
+#include <wchar.h>
+#include <locale.h>
+#include <io.h>
+#include <fcntl.h>
+#include <windows.h>
+#include <conio.h>
+#include "console_utils.h"
+
+// Устанавливаем символ в указанную позицию на экране
+void setPixel(int x, int y, wchar_t symbol) {
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    COORD position = {x, y};
+
+    SetConsoleCursorPosition(hConsole, position);
+    _setmode(_fileno(stdout), _O_U16TEXT);
+    wprintf(L"%lc", symbol);
+}
+
+// Вывод текста в центр консоли
+void centerText(wchar_t *text) {
+    int textLength = wcslen(text);
+
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    GetConsoleScreenBufferInfo(hConsole, &csbi);
+
+    int consoleWidth = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+    int consoleHeight = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+
+    int leftPadding = (consoleWidth - textLength) / 2;
+    int topPadding = (consoleHeight - 1) / 2;
+
+    setlocale(LC_ALL, "");
+    _setmode(_fileno(stdout), _O_U16TEXT);
+
+    for (int i = 0; i < textLength; i++) {
+        setPixel(leftPadding + i, topPadding, text[i]);
+    }
+}
+
+// Очистка консоли
+void clearConsole() {
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    DWORD cellCount;
+    DWORD count;
+    COORD homeCoords = {0, 0};
+
+    if (hConsole == INVALID_HANDLE_VALUE) return;
+
+    // Получаем количество ячеек в буфере
+    if (!GetConsoleScreenBufferInfo(hConsole, &csbi)) return;
+    cellCount = csbi.dwSize.X * csbi.dwSize.Y;
+
+    // Заполняем буфер пробелами
+    if (!FillConsoleOutputCharacter(hConsole, (TCHAR)' ', cellCount, homeCoords, &count)) return;
+
+    // Заполняем буфер атрибутами пробела
+    if (!FillConsoleOutputAttribute(hConsole, csbi.wAttributes, cellCount, homeCoords, &count)) return;
+
+    // Перемещаем курсор домой
+    SetConsoleCursorPosition(hConsole, homeCoords);
+}
+
+// Скрытие курсора
+void hideCursor() {
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_CURSOR_INFO cursorInfo;
+
+    GetConsoleCursorInfo(hConsole, &cursorInfo);
+    cursorInfo.bVisible = FALSE;
+    SetConsoleCursorInfo(hConsole, &cursorInfo);
+}
+
+// Отображение курсора
+void showCursor() {
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_CURSOR_INFO cursorInfo;
+
+    GetConsoleCursorInfo(hConsole, &cursorInfo);
+    cursorInfo.bVisible = TRUE;
+    SetConsoleCursorInfo(hConsole, &cursorInfo);
+}

@@ -1,10 +1,22 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "syntax.h"
 
 SyntaxRule syntax_rules[MAX_SYNTAX_RULES];
 int syntax_rules_count = 0;
+
+// Функция для включения поддержки ANSI-кодов в Windows
+void enableVirtualTerminalProcessing(HANDLE hConsole) {
+    DWORD dwMode = 0;
+    GetConsoleMode(hConsole, &dwMode);
+    dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+    SetConsoleMode(hConsole, dwMode);
+}
+
+// Функция для вывода символа и текста
+void print_colored_symbol_and_text(const char* symbol, const char* symbol_text_color, const char* symbol_background_color, 
+                                    const char* main_text, const char* main_text_color, const char* main_background_color) {
+    printf("\033[0;%s;%sm%s%s", symbol_text_color, symbol_background_color, symbol, CMD_RESET_COLOR);
+    printf("\033[0;%s;%sm%s%s", main_text_color, main_background_color, main_text, CMD_RESET_COLOR);
+}
 
 void add_syntax_rule(const char* keyword, int color) {
     if (syntax_rules_count < MAX_SYNTAX_RULES) {
