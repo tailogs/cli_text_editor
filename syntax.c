@@ -38,7 +38,7 @@ void add_syntax_rules(const char* rules[], int color, int num_rules) {
 
 void add_syntax_rules_c_and_cpp() {
     const char* keywords[] = {
-        "do", "int", "return", "for", "while", "if", "else", "class", "public", "private", 
+        "do", "int", "return", "for", "while", "if", "else", "class", "public", "private", "using", 
         "protected", "struct", "namespace", "template", "void", "static", "auto", "const", "size_t",
         "sizeof", "true", "false", "NULL", "break", "continue", "switch", "case", "default", 
         "typedef", "volatile", "extern", "register", "union", "goto", "long", "short",
@@ -189,8 +189,29 @@ void add_syntax_rules_c_and_cpp() {
     };
     
     const char* include__[] = { "#include" };
-    const char* define__[] = { "#define" };
-    
+	const char* define__[] = { 
+		"#define", 
+		"ifndef", 
+		"#endif", 
+		"#pragma once", 
+		"#ifdef", 
+		"#ifndef", 
+		"#else", 
+		"#elif", 
+		"#include", 
+		"#undef", 
+		"#line", 
+		"#error", 
+		"#warning", 
+		"#if", 
+		"#ifdef", 
+		"#pragma", 
+		"#pragma message", 
+		"#pragma pack", 
+		"#pragma push", 
+		"#pragma pop"
+	};
+	
     add_syntax_rules(include__, COLOR_INCLUDE, sizeof(include__) / sizeof(include__[0]));
     add_syntax_rules(define__, COLOR_MACROS, sizeof(define__) / sizeof(define__[0]));
     add_syntax_rules(headers, COLOR_HEADER, sizeof(headers) / sizeof(headers[0]));
@@ -735,6 +756,94 @@ void add_syntax_rules_css() {
     add_syntax_rule("*/", COLOR_COMMENT);
 }
 
+void add_syntax_rules_lisp() {
+
+    const char* keywords_common_lisp[] = {
+        "defun", "let", "setq", "if", "cond", "loop", "lambda", "quote", 
+        "lambda", "progn", "when", "unless", "case", "dolist", "dotimes", 
+        "defvar", "defparameter", "defmacro", "setf", "multiple-value-bind", 
+        "format", "print", "read", "load", "eval", "mapcar", "reduce", 
+        "remove", "push", "pop", "apply", "funcall", "let*", "flet", 
+        "labels", "with-slots", "with-accessors", "with-open-file"
+    };
+
+    const char* functions_common_lisp[] = {
+        "car", "cdr", "cons", "list", "length", "append", "map", "reduce", 
+        "sort", "find", "remove", "string", "number", "character", "format", 
+        "print", "read-line", "write-line"
+    };
+
+    const char* keywords_scheme[] = {
+        "define", "let", "if", "cond", "lambda", "quote", "begin", 
+        "set!", "define-syntax", "syntax-rules", "case", "and", "or", 
+        "not", "for-each", "map", "filter", "foldl", "foldr"
+    };
+
+    const char* functions_scheme[] = {
+        "car", "cdr", "cons", "list", "length", "append", "map", 
+        "filter", "foldl", "foldr", "apply", "eval", "load", "print", 
+        "read", "write"
+    };
+
+    const char* keywords_clojure[] = {
+        "def", "let", "if", "when", "cond", "loop", "recur", "fn", 
+        "defn", "defmacro", "quote", "doto", "doseq", "dorun", 
+        "for", "map", "filter", "reduce", "apply", "comp"
+    };
+
+    const char* functions_clojure[] = {
+        "println", "print", "str", "first", "rest", "cons", "list", 
+        "map", "filter", "reduce", "apply", "deref", "atom", "ref", 
+        "agent", "promise"
+    };
+
+    // Добавление синтаксических правил для каждого диалекта
+    add_syntax_rules(keywords_common_lisp, COLOR_KEYWORD, sizeof(keywords_common_lisp) / sizeof(keywords_common_lisp[0]));
+    add_syntax_rules(functions_common_lisp, COLOR_FUNCTION, sizeof(functions_common_lisp) / sizeof(functions_common_lisp[0]));
+    
+    add_syntax_rules(keywords_scheme, COLOR_KEYWORD, sizeof(keywords_scheme) / sizeof(keywords_scheme[0]));
+    add_syntax_rules(functions_scheme, COLOR_FUNCTION, sizeof(functions_scheme) / sizeof(functions_scheme[0]));
+    
+    add_syntax_rules(keywords_clojure, COLOR_KEYWORD, sizeof(keywords_clojure) / sizeof(keywords_clojure[0]));
+    add_syntax_rules(functions_clojure, COLOR_FUNCTION, sizeof(functions_clojure) / sizeof(functions_clojure[0]));
+}
+
+void add_syntax_rules_makefile() {
+	const char* keywords_makefile[] = {
+		"all", "clean", "install", "uninstall", 
+		"CFLAGS", "LDFLAGS", "CC", "LD", "AR", 
+		"RANLIB", "INSTALL", "INSTALL_PROGRAM", 
+		"INSTALL_DATA", "MAKE", "TARGETS", "PHONY", 
+		"VPATH", "VIRTUAL", "SOURCES", "OBJECTS", 
+		"DEPENDS", "RECURSIVE", "SUBDIRS", "include", 
+		"override", "export", "unexport", "define", 
+		"endef", "if", "else", "endif", "ifdef", 
+		"ifndef", "include", "sinclude", "call", 
+		"foreach", "endef", "subst", "patsubst", 
+		"wildcard", "filter", "filter-out", "sort", 
+		"join", "last", "first", "value", "eval",
+		"OBJ", "OUT", "$(OUT)", "$(OBJ)", "main.c",
+		"main.h", "resource.rc", "resources.rc",
+		"resource.h", "resources.h", "-Wall", 
+		"Wextra", "gcc"
+	};
+    add_syntax_rules(keywords_makefile, COLOR_KEYWORD, sizeof(keywords_makefile) / sizeof(keywords_makefile[0]));
+}
+
+void add_syntax_rules_resource() {
+	const char* keywords_resource[] = {
+		"DIALOG", "MENU", "ACCELERATORS", "BITMAP", 
+		"CURSOR", "ICON", "STRING", "FONT", 
+		"MESSAGETABLE", "RCDATA", "DLGINIT", 
+		"BEGIN", "END", "VERSION", "LANGUAGE", 
+		"IDD", "IDR", "IDC", "IDB", 
+		"IDM", "IDT", "IDR_MAINFRAME", "IDR_MYAPP", 
+		"IDD_DIALOG", "IDD_ABOUTBOX", "IDD_SETTINGS", 
+		"IDD_LOGIN", "IDD_MAIN", "IDD_HELP"
+	};
+    add_syntax_rules(keywords_resource, COLOR_KEYWORD, sizeof(keywords_resource) / sizeof(keywords_resource[0]));
+}
+
 // Главная функция для добавления правил подсветки для всех языков
 void add_syntax_rules_all() {
     add_syntax_rules_c_and_cpp();
@@ -765,4 +874,7 @@ void add_syntax_rules_all() {
     add_syntax_rules_csharp();
     add_syntax_rules_html();
     add_syntax_rules_css();
+	add_syntax_rules_lisp();
+	add_syntax_rules_makefile();
+	add_syntax_rules_resource();
 }

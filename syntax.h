@@ -138,6 +138,9 @@ void add_syntax_rules_fsharp();
 void add_syntax_rules_csharp();
 void add_syntax_rules_html();
 void add_syntax_rules_css();
+void add_syntax_rules_lisp();
+void add_syntax_rules_makefile();
+void add_syntax_rules_resource();
 
 void add_syntax_rules_all();
 #endif // SYNTAX_H

@@ -555,7 +555,7 @@ int main(int argc, char* argv[]) {
     char* extension = strrchr(filename, '.');
 
     if (extension) {
-        if (strcmp(extension, ".c") == 0 || strcmp(extension, ".cpp") == 0) {
+        if (strcmp(extension, ".c") == 0 || strcmp(extension, ".cpp") == 0 || strcmp(extension, ".h") == 0 || strcmp(extension, ".hpp") == 0) {
             add_syntax_rules_c_and_cpp();
         } else if (strcmp(extension, ".py") == 0) {
             add_syntax_rules_python();
@@ -611,8 +611,21 @@ int main(int argc, char* argv[]) {
             add_syntax_rules_html();
         } else if (strcmp(extension, ".css") == 0) {
             add_syntax_rules_css();
-        }
-    }
+		} else if (strcmp(extension, ".lisp") == 0 || 
+				 strcmp(extension, ".lsp") == 0 || 
+				 strcmp(extension, ".cl") == 0 || 
+				 strcmp(extension, ".scm") == 0 || 
+				 strcmp(extension, ".cljs") == 0 || 
+				 strcmp(extension, ".clj") == 0) {
+			add_syntax_rules_lisp();
+		} else if (strcmp(extension, ".rc") == 0) {
+			add_syntax_rules_resource();
+		}
+    } else {
+		if (strcasecmp(filename, "Makefile") == 0 || strcasecmp(filename, "makefile") == 0) {
+			add_syntax_rules_makefile();
+		} 
+	}
     
     initialize_lines(); // Инициализация строк
 
