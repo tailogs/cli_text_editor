@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include "syntax.h"
 #include "console_utils.h"
+#include "logger.h"
 
 #define MAX_LINES 10000
 #define MAX_LINE_LENGTH 1000
@@ -27,10 +28,13 @@ int max_line_number_length;
 char clipboard[MAX_CLIPBOARD_SIZE]; // Буфер для копирования текста
 int clipboard_size = 0;
 int max_line_number_length = 5;
+int consoleTop, consoleBottom, consoleLeft, consoleRight;
 
 HANDLE hConsole;
 COORD cursorPosition;
 CONSOLE_SCREEN_BUFFER_INFO csbi;
+
+HHOOK mouseHook;
 
 void init_console() {
     hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -39,6 +43,11 @@ void init_console() {
     cursorInfo.bVisible = FALSE; // Hide cursor for cleaner output
     SetConsoleCursorInfo(hConsole, &cursorInfo);
     GetConsoleScreenBufferInfo(hConsole, &csbi);
+
+    consoleLeft = csbi.srWindow.Left;
+    consoleRight = csbi.srWindow.Right;
+    consoleTop = csbi.srWindow.Top;
+    consoleBottom = csbi.srWindow.Bottom;
 }
 
 void set_cursor_position(int x, int y) {
@@ -507,12 +516,64 @@ void cleanup_lines() {
     free(lines); // Освобождение массива строк
 }
 
+// Хук-процедура для обработки событий мыши
+LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
+    if (nCode >= 0) {
+        MOUSEHOOKSTRUCT *mouseInfo = (MOUSEHOOKSTRUCT *)lParam;
+        int x = mouseInfo->pt.x;
+        int y = mouseInfo->pt.y;
+
+        char msg[50] = {'\0'};
+        sprintf(msg, "Mouse moved to: (%d, %d)", x, y);
+        log_message(LOG_INFO, msg);
+    }
+    return CallNextHookEx(mouseHook, nCode, wParam, lParam);
+}
+
+DWORD WINAPI MouseHookThread(LPVOID lpParam) {
+    (void)lpParam;
+    HHOOK hook = SetWindowsHookEx(WH_MOUSE_LL, MouseHookProc, NULL, 0);
+    if (!hook) {
+        log_message(LOG_ERROR, "Failed to install mouse hook!");
+        return 1;
+    }
+
+    MSG msg;
+    while (GetMessage(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+    
+    UnhookWindowsHookEx(hook);
+    return 0;
+}
+
+void InitMouseHook() {
+    HANDLE hThread = CreateThread(NULL, 0, MouseHookThread, NULL, 0, NULL);
+    if (hThread == NULL) {
+        log_message(LOG_ERROR, "Failed to create thread for mouse hook!");
+        exit(1);
+    }
+    CloseHandle(hThread);
+}
+
 int main(int argc, char* argv[]) {
     setlocale(LC_ALL, "");
     SetConsoleOutputCP(1251);
     SetConsoleCP(1251);
+    DWORD mode;
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    HANDLE hConsoleInput = GetStdHandle(STD_INPUT_HANDLE);
+    GetConsoleMode(hConsoleInput, &mode); 
+    mode |= ENABLE_MOUSE_INPUT | ENABLE_EXTENDED_FLAGS; // Add mouse input
     enableVirtualTerminalProcessing(hConsole);
+    // Включаем режим событий мыши
+    SetConsoleMode(hConsoleInput, mode);
+    INPUT_RECORD inputRecord;
+    DWORD events;
+
+    // Установка хука мыши
+    InitMouseHook();
 
     // Обработка флагов версии
     if (argc > 1) {
@@ -662,6 +723,11 @@ int main(int argc, char* argv[]) {
     fill_console_buffer(); // Изначальная отрисовка
 
     while (true) {
+        // Читаем события ввода
+        ReadConsoleInput(hConsole, &inputRecord, 1, &events);
+
+        log_message(LOG_INFO, "START CICLE");
+
         int c = _getch();
         if ((c == 0 || c == 224) && _kbhit()) { // Обработка стрелок и других расширенных клавиш
             c = _getch();
