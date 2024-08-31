@@ -9,6 +9,10 @@ typedef enum {
     LOG_ERROR
 } LogLevel;
 
+// Функция для инициализации логирования
+void init_logging(int enable);
+
+// Функция для записи сообщения в лог
 void log_message(LogLevel level, const char *message, ...);
 
 #endif // LOGGER_H

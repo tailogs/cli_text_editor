@@ -6,6 +6,9 @@
 #include <locale.h>
 #include <stdlib.h>
 
+// Глобальная переменная для хранения состояния логирования
+static int logging_enabled = 1;
+
 // Конвертация строки из UTF-8 в Windows-1251
 // Эта функция является упрощенной и требует корректировки для полноценной работы
 char* utf8_to_win1251(const char *str) {
@@ -24,7 +27,15 @@ static const char* log_level_to_string(LogLevel level) {
     }
 }
 
+void init_logging(int enable) {
+    logging_enabled = enable;
+}
+
 void log_message(LogLevel level, const char *message, ...) {
+    if (!logging_enabled) {
+        return; // Если логирование выключено, ничего не делаем
+    }
+
     FILE *log_file = fopen("logfile.log", "a"); // Открываем файл с кодировкой WIN1251
     if (log_file == NULL) {
         perror("Error opening log file");

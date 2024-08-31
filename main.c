@@ -36,6 +36,8 @@ CONSOLE_SCREEN_BUFFER_INFO csbi;
 
 HHOOK mouseHook;
 
+const bool DEBUG = false;
+
 void init_console() {
     hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_CURSOR_INFO cursorInfo;
@@ -574,6 +576,9 @@ int main(int argc, char* argv[]) {
 
     // Установка хука мыши
     InitMouseHook();
+
+    // Инициализируем логирование
+    init_logging(DEBUG); // Включаем логирование
 
     // Обработка флагов версии
     if (argc > 1) {

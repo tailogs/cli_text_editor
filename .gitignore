@@ -54,3 +54,4 @@ dkms.conf
 # Мои файлы
 *.res
 .vscode/
+*.log
