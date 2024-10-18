@@ -75,3 +75,21 @@ void showCursor() {
     cursorInfo.bVisible = TRUE;
     SetConsoleCursorInfo(hConsole, &cursorInfo);
 }
+
+void replaceSpacesWithTabs(char *str) {
+    char buffer[1024]; // Буфер для хранения результата
+    int i = 0, j = 0;
+
+    while (str[i] != '\0') {
+        // Проверяем, есть ли 4 пробела подряд
+        if (str[i] == ' ' && str[i + 1] == ' ' && str[i + 2] == ' ' && str[i + 3] == ' ') {
+            buffer[j++] = '\t'; // Заменяем 4 пробела на таб
+            i += 4; // Пропускаем 4 пробела
+        } else {
+            buffer[j++] = str[i++]; // Копируем текущий символ
+        }
+    }
+    buffer[j] = '\0'; // Завершаем строку
+
+    strcpy(str, buffer); // Копируем результат обратно в исходную строку
+}

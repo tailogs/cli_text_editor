@@ -25,4 +25,6 @@ void hideCursor();
 // Отображает курсор
 void showCursor();
 
+void replaceSpacesWithTabs(char *str);
+
 #endif // CONSOLE_UTILS_H

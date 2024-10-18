@@ -15,7 +15,7 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MAX_CLIPBOARD_SIZE 10000
 
-#define VERSION "1.2.1"
+#define VERSION "1.2.2"
 
 char** lines;
 int num_lines = 0;
@@ -469,19 +469,21 @@ void save_file(const char* filename) {
     hideCursor();    // Прячем курсор
     if (file) {
         for (int i = 0; i < num_lines; i++) {
+            replaceSpacesWithTabs(lines[i]);
             fprintf(file, "%s\n", lines[i]);
         }
         fclose(file);
         set_cursor_position(0, screen_height);
 
-        wchar_t text[] = L"File saved successfully.";
-        centerText(text, TXT_GREEN, BACK_BLACK);  // Выводим текст в центр консоли
+        //wchar_t text[] = L"File saved successfully.";
+        //centerText(text, TXT_GREEN, BACK_BLACK);  // Выводим текст в центр консоли
     } else {
         set_cursor_position(0, screen_height);
-        wchar_t text[] = L"Error saving file.";
-        centerText(text, TXT_RED, BACK_BLACK);  // Выводим текст в центр консоли
+        //wchar_t text[] = L"Error saving file.";
+        //centerText(text, TXT_RED, BACK_BLACK);  // Выводим текст в центр консоли
     }
-    Sleep(500);
+    //Sleep(500);
+    //Sleep(100);
 
     // Очистка консоли и перерисовка интерфейса после паузы
     clearConsole();
@@ -789,6 +791,7 @@ int main(int argc, char* argv[]) {
             insert_tab();
         } else if (c == 19) { // Ctrl+S
             save_file(argv[1]);
+            
         } else if (c == 17) { // Ctrl+Q
             break;
         } else if (c == 3) { // Ctrl+C

@@ -57,7 +57,9 @@ void add_syntax_rules_c_and_cpp() {
         "OVERLAPPED", "WSADATA", "SOCKADDR_IN", "SOCKADDR", "RECT", "POINT", 
         "MSG", "BITMAPINFO", "DEVMODE", "LOGFONT", "PAINTSTRUCT", "HFILE", 
         "HHOOK", "DWORD", "WORD", "BYTE", "BOOL", "LPVOID", "LPCSTR", "LPCWSTR", 
-        "LPWSTR", "LRESULT", "WPARAM", "LPARAM", "CHAR_INFO", "LC_ALL", "FILE", "SyntaxRule"
+        "LPWSTR", "LRESULT", "WPARAM", "LPARAM", "CHAR_INFO", "LC_ALL", "FILE", "SyntaxRule",
+        "uint8_t", "uint16_t", "uint32_t", "uint64_t", "int8_t", "int16_t", "int32_t", "int64_t",
+        "intmax_t", "uintmax_t", "intptr_t", "uintptr_t"
     };
     
     const char* functions[] = {
