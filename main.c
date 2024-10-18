@@ -29,6 +29,7 @@ char clipboard[MAX_CLIPBOARD_SIZE]; // Буфер для копирования текста
 int clipboard_size = 0;
 int max_line_number_length = 5;
 int consoleTop, consoleBottom, consoleLeft, consoleRight;
+bool makefileOpen = false;
 
 HANDLE hConsole;
 COORD cursorPosition;
@@ -469,7 +470,7 @@ void save_file(const char* filename) {
     hideCursor();    // Прячем курсор
     if (file) {
         for (int i = 0; i < num_lines; i++) {
-            replaceSpacesWithTabs(lines[i]);
+            //if (makefileOpen) replaceSpacesWithTabs(lines[i]);
             fprintf(file, "%s\n", lines[i]);
         }
         fclose(file);
@@ -623,6 +624,7 @@ int main(int argc, char* argv[]) {
     char* extension = strrchr(filename, '.');
 
     if (extension) {
+        makefileOpen = false;
         if (strcmp(extension, ".c") == 0 || strcmp(extension, ".cpp") == 0 || strcmp(extension, ".h") == 0 || strcmp(extension, ".hpp") == 0) {
             add_syntax_rules_c_and_cpp();
         } else if (strcmp(extension, ".py") == 0) {
@@ -690,9 +692,11 @@ int main(int argc, char* argv[]) {
 			add_syntax_rules_resource();
 		}
     } else {
+        makefileOpen = false;
 		if (strcasecmp(filename, "Makefile") == 0 || strcasecmp(filename, "makefile") == 0) {
 			add_syntax_rules_makefile();
-		} 
+            makefileOpen = true;
+		}
 	}
     
     initialize_lines(); // Инициализация строк
