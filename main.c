@@ -15,7 +15,7 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MAX_CLIPBOARD_SIZE 10000
 
-#define VERSION "1.2.2"
+#define VERSION "1.2.3"
 
 char** lines;
 int num_lines = 0;
@@ -562,6 +562,74 @@ void InitMouseHook() {
     CloseHandle(hThread);
 }
 
+#include <stdio.h>
+#include <string.h>
+#include <windows.h>  // Для использования Windows API
+
+void convert_spaces_to_tabs(const char *file_path) {
+    FILE *file = fopen(file_path, "r"); // Открываем файл для чтения
+    if (!file) {
+        perror("Failed to open file!");
+        return;
+    }
+
+    char line[1000];
+
+    // Открываем временный файл для записи
+    FILE *temp_file = tmpfile();
+    if (!temp_file) {
+        perror("Failed to open temp file!");
+        fclose(file);
+        return;
+    }
+
+    // Читаем строки исходного файла
+    while (fgets(line, sizeof(line), file)) {
+        char *ptr = line;
+
+        // Создаем временный буфер для новой строки
+        char new_line[1000];
+        int new_index = 0;
+
+        while (*ptr) {
+            // Если находим 4 пробела подряд
+            if (strncmp(ptr, "    ", 4) == 0) {
+                new_line[new_index++] = '\t'; // Заменяем на табуляцию
+                ptr += 4; // Пропускаем 4 пробела
+            } else {
+                new_line[new_index++] = *ptr++; // Копируем символ
+            }
+        }
+        new_line[new_index] = '\0'; // Завершаем строку
+
+        // Записываем строку в временный файл
+        fputs(new_line, temp_file);
+    }
+
+    fclose(file); // Закрываем исходный файл после чтения
+
+    // Открываем исходный файл заново для записи
+    file = fopen(file_path, "w");
+    if (!file) {
+        perror("Failed to reopen file for writing!");
+        fclose(temp_file);
+        return;
+    }
+
+    // Копируем содержимое из временного файла обратно в исходный
+    rewind(temp_file); // Перемещаем указатель в начало временного файла
+
+    char c;
+    while ((c = fgetc(temp_file)) != EOF) {
+        fputc(c, file);
+    }
+
+    fclose(file); // Закрываем исходный файл
+    fclose(temp_file); // Закрываем временный файл
+
+    printf("The operation was successful!\n");
+}
+
 int main(int argc, char* argv[]) {
     setlocale(LC_ALL, "");
     SetConsoleOutputCP(1251);
@@ -600,20 +668,32 @@ int main(int argc, char* argv[]) {
             printf("        -h, --h, -help, --help\n");
             printf("            | PRINT HELP\n");
             printf("        -v, --v, -version, --version\n");
-            printf("            | PRINT VERSION");
+            printf("            | PRINT VERSION\n");
+            printf("    | SPECIAL COMMANDS:\n");
+            printf("        --repair\n");
+            printf("            | Replaces spaces with tabs. Suitable for Makefile\n");
+            printf("            | Example: clite <filename> --repair\n");
             printf(CMD_RESET_COLOR);
             return 0;
-        } 
+        }
     }
 
-    if (argc != 2) {
-        char usage[100]; 
-        sprintf(usage, "     | Usage: %s <filename>", argv[0]);
-        print_colored_symbol_and_text("|", TXT_BLACK, BACK_WHITE, " -> ERROR:", TXT_LIGHT_WHITE, BACK_LIGHT_RED);
-        printf("\n");
-        print_colored_symbol_and_text(".", TXT_BLACK, BACK_WHITE, usage, TXT_LIGHT_WHITE, BACK_LIGHT_RED);
-        return 1;
+    // if (argc != 2) {
+    //     char usage[100]; 
+    //     sprintf(usage, "     | Usage: %s <filename>", argv[0]);
+    //     print_colored_symbol_and_text("|", TXT_BLACK, BACK_WHITE, " -> ERROR:", TXT_LIGHT_WHITE, BACK_LIGHT_RED);
+    //     printf("\n");
+    //     print_colored_symbol_and_text(".", TXT_BLACK, BACK_WHITE, usage, TXT_LIGHT_WHITE, BACK_LIGHT_RED);
+    //     return 1;
+    // }
+
+    if (argc == 3 && strcmp(argv[2], "--repair") == 0) {
+        convert_spaces_to_tabs(argv[1]); // Используем имя файла из аргументов
+        exit(0);
+    } else {
+        printf("Wrong arguments. Use: clite <filename> --repair\n");
     }
+
 
     init_console();
     get_console_size();
