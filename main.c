@@ -8,14 +8,16 @@
 #include "syntax.h"
 #include "console_utils.h"
 #include "logger.h"
+#include "explorer.h"
 
 #define MAX_LINES 10000
 #define MAX_LINE_LENGTH 1000
 #define MIN(a, b) (((size_t)(a) < (size_t)(b)) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MAX_CLIPBOARD_SIZE 10000
+#define MAX_FILE_SIZE 1024 * 1024  // Максимальный размер файла (например, 1 MB)
 
-#define VERSION "1.2.4"
+#define VERSION "1.3.4"
 
 char** lines;
 int num_lines = 0;
@@ -30,6 +32,8 @@ int clipboard_size = 0;
 int max_line_number_length = 5;
 int consoleTop, consoleBottom, consoleLeft, consoleRight;
 bool makefileOpen = false;
+char current_file[MAX_PATH] = ""; // Хранит текущий открытый файл
+char* file_buffer = NULL;  // Буфер для содержимого файла
 
 HANDLE hConsole;
 COORD cursorPosition;
@@ -37,7 +41,10 @@ CONSOLE_SCREEN_BUFFER_INFO csbi;
 
 HHOOK mouseHook;
 
-const bool DEBUG = false;
+const bool DEBUG = true;
+FILE* file = NULL;
+
+void load_file(const char* filename);
 
 void init_console() {
     hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -626,6 +633,24 @@ void convert_spaces_to_tabs(const char *file_path) {
     printf("The operation was successful!\n");
 }
 
+void save_and_close_current_file() {
+    if (strlen(current_file) > 0) {
+        save_file(current_file); // Сохраняем файл
+        printf("File '%s' saved and closed.\n", current_file);
+    }
+}
+
+void handle_new_file(char* new_file) {
+    if (new_file && strlen(new_file) > 0) {
+        strcpy(current_file, new_file); // Обновляем текущий файл
+        printf("Opening new file: %s\n", current_file);
+        load_file(current_file); // Функция загрузки содержимого файла
+    } else {
+        printf("No file selected. Reopening previous file: %s\n", current_file);
+        load_file(current_file); // Перезагружаем предыдущий файл
+    }
+}
+
 int main(int argc, char* argv[]) {
     setlocale(LC_ALL, "");
     SetConsoleOutputCP(1251);
@@ -808,6 +833,8 @@ int main(int argc, char* argv[]) {
     max_line_number_length = max_line_number_length;
     fill_console_buffer(); // Изначальная отрисовка
 
+    char* newFile = "";
+
     while (true) {
         // Читаем события ввода
         ReadConsoleInput(hConsole, &inputRecord, 1, &events);
@@ -876,9 +903,25 @@ int main(int argc, char* argv[]) {
             save_file(argv[1]);
         } else if (c == 17) { // Ctrl+Q
             break;
+        } else if (c == 5) { // Ctrl+E
+            //system("cls");
+            newFile = startExplorer();
+            log_message(LOG_INFO, newFile);
+            break;
+            //system("cls");
         } else { // Обычные печатные символы
             insert_char(c);
         }
+    }
+
+    if (newFile != NULL) {
+        char command[256]; // Размер массива можно изменить в зависимости от длины пути к файлу
+        snprintf(command, sizeof(command), "clite %s", newFile);
+        system(command);
+    } else {
+        char command[256]; // Размер массива можно изменить в зависимости от длины пути к файлу
+        snprintf(command, sizeof(command), "clite %s", filename);
+        system(command);
     }
 
     // Восстановление видимости курсора перед выходом
@@ -892,4 +935,45 @@ int main(int argc, char* argv[]) {
     cleanup_lines(); // Освобождение ресурсов перед выходом
 
     return 0;
+}
+
+void load_file(const char* filename) {
+    FILE *file = fopen(filename, "r");
+    if (file == NULL) {
+        perror("Failed to open file");
+        return;
+    }
+
+    // Выделяем память для буфера
+    file_buffer = (char*)malloc(MAX_FILE_SIZE);
+    if (file_buffer == NULL) {
+        perror("Failed to allocate memory");
+        fclose(file);
+        return;
+    }
+
+    // Считываем содержимое файла в буфер
+    size_t bytesRead = fread(file_buffer, 1, MAX_FILE_SIZE, file);
+    if (ferror(file)) {
+        perror("Error reading file");
+        free(file_buffer);  // Освобождаем память при ошибке
+        file_buffer = NULL;
+        fclose(file);
+        return;
+    }
+
+    file_buffer[bytesRead] = '\0';  // Добавляем нуль-терминатор в конец строки
+
+    fclose(file);
+
+    // Здесь можно обрабатывать содержимое файла, например, вывести его на экран
+    printf("File content loaded (%zu bytes):\n%s\n", bytesRead, file_buffer);
+}
+
+// Освободить память, когда она больше не нужна
+void free_file_buffer() {
+    if (file_buffer != NULL) {
+        free(file_buffer);
+        file_buffer = NULL;
+    }
 }
