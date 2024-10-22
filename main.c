@@ -17,7 +17,7 @@
 #define MAX_CLIPBOARD_SIZE 10000
 #define MAX_FILE_SIZE 1024 * 1024  // Максимальный размер файла (например, 1 MB)
 
-#define VERSION "1.3.4"
+#define VERSION "1.3.5"
 
 char** lines;
 int num_lines = 0;

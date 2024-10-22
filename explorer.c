@@ -14,7 +14,11 @@
 #define KEY_DOWN 80
 #define KEY_ENTER 13
 #define KEY_ESC 27
-#define KEY_CTRL_Q 17
+#define KEY_CTRL_Q 17 // Ctrl + Q
+#define KEY_CTRL_F 6  // Ctrl + F
+#define KEY_CTRL_C 3  // Ctrl + C
+#define KEY_CTRL_D 4  // Ctrl + D
+#define KEY_CTRL_R 18 // Ctrl + R
 
 // Цвета для отображения
 #define COLOR_DEFAULT 7
@@ -28,6 +32,11 @@ char currentPath[MAX_PATH];
 
 // Для хранения предыдущего выбора
 int previousSelection = -1;
+
+// Добавим пайпы для ввода/вывода
+HANDLE hReadPipe, hWritePipe;
+PROCESS_INFORMATION piProcInfo;
+STARTUPINFO siStartInfo;
 
 // Функция для скрытия и отображения курсора
 void setCursorVisibility(int visible) {
@@ -226,6 +235,175 @@ void handleEnter() {
     drawDirectory();  // Перерисовываем интерфейс
 }
 
+void displayMessageTemporarily(const char *message) {
+    moveCursor(0, 10);  // Позиция для вывода сообщения
+    clearLine();        // Очищаем строку
+    printf("%s\n", message);
+    Sleep(1000);        // Ждем 1 секунду
+    loadDirectory(currentPath);  // Обновляем содержимое каталога
+    drawDirectory();    // Перерисовываем интерфейс
+}
+
+void copyDirectory() {
+    char source[MAX_PATH], destination[MAX_PATH];
+    printf("Enter the source directory: ");
+    scanf("%s", source);
+    printf("Enter the destination directory: ");
+    scanf("%s", destination);
+
+    // Функция для копирования каталога
+    // Здесь должен быть код для копирования каталога, в зависимости от вашей логики
+}
+
+void createFile() {
+    char fileName[MAX_PATH];
+    printf("Enter the name of the file to create: ");
+    scanf("%s", fileName);
+
+    // Формируем полный путь к файлу
+    char fullPath[MAX_PATH];
+    snprintf(fullPath, sizeof(fullPath), "%s\\%s", currentPath, fileName);
+
+    FILE *file = fopen(fullPath, "w");
+    if (file) {
+        fclose(file);
+        displayMessageTemporarily("File created successfully."); // Изменение здесь
+    } else {
+        displayMessageTemporarily("Error creating file."); // Изменение здесь
+    }
+}
+
+void createDirectory() {
+    char dirName[MAX_PATH];
+    printf("Enter the name of the directory to create: ");
+    scanf("%s", dirName);
+
+    // Формируем полный путь к каталогу
+    char fullPath[MAX_PATH];
+    snprintf(fullPath, sizeof(fullPath), "%s\\%s", currentPath, dirName);
+
+    if (CreateDirectory(fullPath, NULL) || GetLastError() == ERROR_ALREADY_EXISTS) {
+        displayMessageTemporarily("Directory created successfully."); // Изменение здесь
+    } else {
+        displayMessageTemporarily("Error creating directory."); // Изменение здесь
+    }
+}
+
+void confirmDelete(const char* name) {
+    char fullPath[MAX_PATH];
+    snprintf(fullPath, sizeof(fullPath), "%s\\%s", currentPath, name); // Формируем полный путь
+
+    int confirm = 0;  // 0 - no, 1 - yes
+    while (1) {
+        moveCursor(0, 10);  // Позиция для вывода сообщения
+        printf("Are you sure you want to delete '%s'? (Y/N) ", fullPath);
+        int c = _getch();
+        if (c == 'Y' || c == 'y') {
+            confirm = 1;
+            break;
+        } else if (c == 'N' || c == 'n') {
+            confirm = 0;
+            break;
+        }
+    }
+
+    if (confirm) {
+        // Сначала пробуем удалить каталог, если он не пустой, то удаляем файлы
+        if (RemoveDirectory(fullPath)) {
+            displayMessageTemporarily("Deleted directory successfully."); // Изменение здесь
+        } else {
+            // Если не удалось удалить как каталог, пробуем удалить как файл
+            if (DeleteFile(fullPath)) {
+                displayMessageTemporarily("Deleted file successfully."); // Изменение здесь
+            } else {
+                displayMessageTemporarily("Error deleting."); // Изменение здесь
+            }
+        }
+    }
+}
+
+
+void handleDelete() {
+    const char* selectedPath = entries[currentSelection].name; // Получаем путь к выделенному элементу
+    confirmDelete(selectedPath);
+}
+
+void initTerminalEmulator() {
+    SECURITY_ATTRIBUTES saAttr;
+    saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+    saAttr.bInheritHandle = TRUE; // Позволяем потомкам наследовать дескрипторы
+    saAttr.lpSecurityDescriptor = NULL;
+
+    // Создаем пайпы
+    if (!CreatePipe(&hReadPipe, &hWritePipe, &saAttr, 0)) {
+        perror("CreatePipe failed");
+        return;
+    }
+
+    // Создаем процесс для эмуляции терминала
+    ZeroMemory(&siStartInfo, sizeof(siStartInfo));
+    siStartInfo.cb = sizeof(STARTUPINFO);
+    siStartInfo.hStdInput = hReadPipe;
+    siStartInfo.hStdOutput = hWritePipe;
+    siStartInfo.hStdError = hWritePipe;
+    siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
+
+    // Запускаем консоль
+    if (!CreateProcess("C:\\Windows\\System32\\cmd.exe", NULL, NULL, NULL, TRUE, 0, NULL, NULL, &siStartInfo, &piProcInfo)) {
+        perror("CreateProcess failed");
+        return;
+    }
+    
+    // Закрываем ненужные дескрипторы
+    CloseHandle(hWritePipe);
+}
+
+void sendToTerminal(const char* command) {
+    DWORD written;
+    WriteFile(hReadPipe, command, strlen(command), &written, NULL);
+    WriteFile(hReadPipe, "\n", 1, &written, NULL); // Отправляем новую строку
+}
+
+void readFromTerminal() {
+    char buffer[4096];
+    DWORD read;
+    
+    // Читаем вывод из терминала
+    while (ReadFile(hReadPipe, buffer, sizeof(buffer) - 1, &read, NULL) && read > 0) {
+        buffer[read] = '\0'; // Завершаем строку
+        printf("%s", buffer); // Выводим на экран
+    }
+}
+
+void handleCtrlR() {
+    // Эмулируем терминал
+    initTerminalEmulator();
+    
+    // Цикл для обработки ввода
+    while (1) {
+        if (_kbhit()) {
+            int c = _getch();
+            if (c == KEY_ESC) {
+                // Закрываем эмулятор при нажатии ESC
+                break;
+            } else {
+                // Обработка ввода команд
+                char command[256];
+                printf("Enter command: ");
+                fgets(command, sizeof(command), stdin); // Получаем команду
+                sendToTerminal(command); // Отправляем команду
+                readFromTerminal(); // Читаем ответ
+            }
+        }
+    }
+
+    // Завершаем процесс
+    TerminateProcess(piProcInfo.hProcess, 0);
+    CloseHandle(piProcInfo.hProcess);
+    CloseHandle(piProcInfo.hThread);
+    CloseHandle(hReadPipe);
+}
+
 const char* startExplorer() {
     static char selectedFilePath[MAX_PATH];  // Для хранения пути к выбранному файлу
 
@@ -267,10 +445,30 @@ const char* startExplorer() {
             drawDirectory();  // Перерисовываем интерфейс
         } else if (c == KEY_CTRL_Q) {
             return NULL;  // Возвращаем NULL при выходе без выбора файла
+        } else if (c == KEY_CTRL_F) {
+            // Вызов функции создания файла
+            system("cls");
+            createFile(); 
+        } else if (c == KEY_CTRL_C) {
+            // Вызов функции копирования каталога
+            system("cls");
+            createDirectory();  
+        } else if (c == KEY_CTRL_D) {
+            // Вызов функции удаления с подтверждением
+            system("cls");
+            confirmDelete(entries[currentSelection].name);
+        } else if (c == KEY_CTRL_R) {
+            // Открытие интерфейса работы с командной строкой
+            // TODO: Реализовать функциональность
+            // Открытие интерфейса работы с cmd
+            // TODO: Implement cmd interface
+            // system("cls");
+            //handleCtrlR();  // Обрабатываем Ctrl + R
+            // ОТключен ведь сломан, плюс нет смысла пока.
         }
+
     }
 
     setCursorVisibility(1);  // Показываем курсор при выходе
     return NULL;  // Возвращаем NULL при выходе без выбора файла
 }
-
