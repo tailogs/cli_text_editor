@@ -15,7 +15,7 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MAX_CLIPBOARD_SIZE 10000
 
-#define VERSION "1.2.3"
+#define VERSION "1.2.4"
 
 char** lines;
 int num_lines = 0;
@@ -562,10 +562,6 @@ void InitMouseHook() {
     CloseHandle(hThread);
 }
 
-#include <stdio.h>
-#include <string.h>
-#include <windows.h>  // Для использования Windows API
-
 void convert_spaces_to_tabs(const char *file_path) {
     FILE *file = fopen(file_path, "r"); // Открываем файл для чтения
     if (!file) {
@@ -693,7 +689,6 @@ int main(int argc, char* argv[]) {
     } else {
         printf("Wrong arguments. Use: clite <filename> --repair\n");
     }
-
 
     init_console();
     get_console_size();
@@ -867,6 +862,10 @@ int main(int argc, char* argv[]) {
                     delete_after_cursor();
                     break;
             }
+        } else if (c == '{' || c == '[' || c == '(') {
+            insert_char(c);
+            insert_char(c == '{' ? '}' : (c == '[' ? ']' : ')'));
+            current_col--; // Перемещаем курсор в середину
         } else if (c == 13) { // Enter
             new_line();
         } else if (c == 8) { // Backspace
@@ -875,12 +874,8 @@ int main(int argc, char* argv[]) {
             insert_tab();
         } else if (c == 19) { // Ctrl+S
             save_file(argv[1]);
-            
         } else if (c == 17) { // Ctrl+Q
             break;
-        } else if (c == 3) { // Ctrl+C
-            //copy_line_without_number();
-            //printf("Line copied to clipboard.\n");
         } else { // Обычные печатные символы
             insert_char(c);
         }
