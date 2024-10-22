@@ -680,7 +680,7 @@ int main(int argc, char* argv[]) {
             printf(TXT_ONLY(TXT_GREEN) "    | CLITE VERSION: %s" CMD_RESET_COLOR, VERSION);
             return 0;
         } else if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--h") == 0 ||
-            strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-help") == 0) {
+                strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-help") == 0) {
             printf(TXT_ONLY(TXT_MAGENTA));
             printf("-> HELP:\n");
             printf("    | DEVELOPER: TAILOGS\n");
@@ -694,6 +694,19 @@ int main(int argc, char* argv[]) {
             printf("        --repair\n");
             printf("            | Replaces spaces with tabs. Suitable for Makefile\n");
             printf("            | Example: clite <filename> --repair\n");
+            printf("    | KEYBOARD SHORTCUTS:\n");
+            printf("        Ctrl+S\n");
+            printf("            | Save the file\n");
+            printf("        Ctrl+Q\n");
+            printf("            | Exit the file or explorer\n");
+            printf("        Ctrl+E\n");
+            printf("            | Open the explorer\n");
+            printf("        Ctrl+F (in explorer)\n");
+            printf("            | Create a file\n");
+            printf("        Ctrl+C (in explorer)\n");
+            printf("            | Create a directory\n");
+            printf("        Ctrl+D (in explorer)\n");
+            printf("            | Delete a file or directory\n");
             printf(CMD_RESET_COLOR);
             return 0;
         }
