@@ -15,7 +15,7 @@
 #define MIN(a, b) (((size_t)(a) < (size_t)(b)) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MAX_CLIPBOARD_SIZE 10000
-#define MAX_FILE_SIZE 1024 * 1024  // Максимальный размер файла (например, 1 MB)
+#define MAX_FILE_SIZE 1024 * 1024  // (1 MB)
 
 #define VERSION "1.3.5"
 
@@ -27,13 +27,13 @@ int top_line = 0;
 int screen_height;
 int screen_width;
 int max_line_number_length;
-char clipboard[MAX_CLIPBOARD_SIZE]; // Буфер для копирования текста
+char clipboard[MAX_CLIPBOARD_SIZE];
 int clipboard_size = 0;
 int max_line_number_length = 5;
 int consoleTop, consoleBottom, consoleLeft, consoleRight;
 bool makefileOpen = false;
-char current_file[MAX_PATH] = ""; // Хранит текущий открытый файл
-char* file_buffer = NULL;  // Буфер для содержимого файла
+char current_file[MAX_PATH] = ""; 
+char* file_buffer = NULL;  
 
 HANDLE hConsole;
 COORD cursorPosition;
@@ -76,14 +76,12 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
     int line_len = strlen(line);
     int i;
 
-    // Создаем буфер для строки с заменой табуляций
-    char expanded_line[2048]; // Предполагается, что длина строки меньше 2048 символов
+    char expanded_line[2048]; 
     int expanded_len = 0;
 
-    // Заменяем табуляции на пробелы
     for (i = 0; i < line_len; i++) {
         if (line[i] == '\t') {
-            int spaces = 4 - (expanded_len % 4); // Количество пробелов для добавления
+            int spaces = 4 - (expanded_len % 4);
             for (int j = 0; j < spaces; j++) {
                 expanded_line[expanded_len++] = ' ';
             }
@@ -91,14 +89,12 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
             expanded_line[expanded_len++] = line[i];
         }
     }
-    expanded_line[expanded_len] = '\0'; // Завершаем строку
+    expanded_line[expanded_len] = '\0';
 
-    // Инициализируем буфер с цветом по умолчанию (белый)
     for (i = 0; i < expanded_len; i++) {
-        buffer[row * screen_width + start_col + i].Attributes = 15; // Белый текст
+        buffer[row * screen_width + start_col + i].Attributes = 15; 
     }
 
-    // Определяем комментарии и их диапазоны
     typedef struct {
         int start;
         int end;
@@ -109,33 +105,29 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
     int num_comments = 0;
 
     i = 0;
-    while (i < expanded_len) {
-        // Обработка однострочных комментариев
+    while (i < expanded_len) {\
         if (expanded_line[i] == '/' && i + 1 < expanded_len && (expanded_line[i + 1] == '/' || expanded_line[i + 1] == '*')) {
             if (expanded_line[i + 1] == '/') {
-                // Записываем комментарий
                 comments[num_comments].start = i;
                 comments[num_comments].end = expanded_len;
                 comments[num_comments].is_multiline = false;
                 num_comments++;
                 while (i < expanded_len) {
-                    buffer[row * screen_width + start_col + i].Attributes = 8; // Темно-серый для однострочных комментариев
+                    buffer[row * screen_width + start_col + i].Attributes = 8; 
                     i++;
                 }
             } else if (expanded_line[i + 1] == '*') {
-                // Записываем начало многострочного комментария
                 comments[num_comments].start = i;
                 comments[num_comments].is_multiline = true;
-                i += 2; // Пропускаем "/*"
+                i += 2;
                 while (i < expanded_len) {
                     if (expanded_line[i] == '*' && i + 1 < expanded_len && expanded_line[i + 1] == '/') {
-                        // Записываем конец многострочного комментария
                         comments[num_comments].end = i + 2;
                         num_comments++;
-                        i += 2; // Пропускаем "*/"
+                        i += 2; 
                         break;
                     }
-                    buffer[row * screen_width + start_col + i].Attributes = 8; // Темно-серый для многострочных комментариев
+                    buffer[row * screen_width + start_col + i].Attributes = 8;
                     i++;
                 }
             }
@@ -143,8 +135,7 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
             i++;
         }
     }
-
-    // Подсветка ключевых слов и функций
+    
     for (i = 0; i < syntax_rules_count; i++) {
         SyntaxRule rule = syntax_rules[i];
         char* ptr = strstr(expanded_line, rule.keyword);
@@ -153,11 +144,9 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
             int index = ptr - expanded_line;
             int keyword_len = strlen(rule.keyword);
 
-            // Проверяем, что ключевое слово не является частью другого слова
             bool is_start_valid = (index == 0 || (!isalnum(expanded_line[index - 1]) && expanded_line[index - 1] != '_'));
             bool is_end_valid = (index + keyword_len >= expanded_len || (!isalnum(expanded_line[index + keyword_len]) && expanded_line[index + keyword_len] != '_'));
 
-            // Проверяем, что ключевое слово не находится в комментарии
             bool in_comment = false;
             for (int j = 0; j < num_comments; j++) {
                 if (index >= comments[j].start && index < comments[j].end) {
@@ -167,43 +156,38 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
             }
 
             if (!in_comment && is_start_valid && is_end_valid) {
-                // Проверяем, что это функция (слово + открывающая скобка)
                 if (index + keyword_len < expanded_len && expanded_line[index + keyword_len] == '(') {
-                    // Подсвечиваем функцию
                     for (int j = 0; j < keyword_len; j++) {
-                        buffer[row * screen_width + start_col + index + j].Attributes = COLOR_FUNCTION; // Светло-синий для функций
+                        buffer[row * screen_width + start_col + index + j].Attributes = COLOR_FUNCTION; 
                     }
                 } else {
-                    // Подсвечиваем ключевое слово
                     for (int j = 0; j < keyword_len; j++) {
                         buffer[row * screen_width + start_col + index + j].Attributes = rule.color;
                     }
                 }
             }
-            ptr = strstr(ptr + keyword_len, rule.keyword); // Продолжаем поиск с нового места
+            ptr = strstr(ptr + keyword_len, rule.keyword); 
         }
     }
-
-    // Подсветка блоков if
+\
     for (i = 0; i < expanded_len; i++) {
         if (expanded_line[i] == 'i' && i + 1 < expanded_len && expanded_line[i + 1] == 'f' && 
             (i == 0 || isspace(expanded_line[i - 1]) || expanded_line[i - 1] == '_') && 
             i + 2 < expanded_len && expanded_line[i + 2] == '(') {
             int start = i;
-            i += 3; // Пропускаем "if("
+            i += 3; 
             while (i < expanded_len && expanded_line[i] != ')') {
                 i++;
             }
             if (i < expanded_len) {
-                int end = i + 1; // Включаем закрывающую скобку
+                int end = i + 1; 
                 for (int j = start; j < end; j++) {
-                    buffer[row * screen_width + start_col + j].Attributes = 10; // Зеленый для блоков if
+                    buffer[row * screen_width + start_col + j].Attributes = 10; 
                 }
             }
         }
     }
-
-    // Подсветка чисел
+\
     i = 0;
     while (i < expanded_len) {
         if (isdigit(expanded_line[i])) {
@@ -213,14 +197,13 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
             }
             int end = i;
             for (int j = start; j < end; j++) {
-                buffer[row * screen_width + start_col + j].Attributes = 11; // Светло-голубой для чисел
+                buffer[row * screen_width + start_col + j].Attributes = 11; 
             }
         } else {
             i++;
         }
     }
-
-    // Подсветка строк в двойных кавычках
+\
     i = 0;
     while (i < expanded_len) {
         if (expanded_line[i] == '"') {
@@ -232,14 +215,13 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
             if (i < expanded_len) {
                 int end = i;
                 for (int j = start; j <= end; j++) {
-                    buffer[row * screen_width + start_col + j].Attributes = 12; // Красный для строк
+                    buffer[row * screen_width + start_col + j].Attributes = 12; 
                 }
             }
         }
         i++;
     }
-
-    // Подсветка строк в одинарных кавычках
+\
     i = 0;
     while (i < expanded_len) {
         if (expanded_line[i] == '\'') {
@@ -251,14 +233,13 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
             if (i < expanded_len) {
                 int end = i;
                 for (int j = start; j <= end; j++) {
-                    buffer[row * screen_width + start_col + j].Attributes = 13; // Пурпурный для строк в одинарных кавычках
+                    buffer[row * screen_width + start_col + j].Attributes = 13; 
                 }
             }
         }
         i++;
     }
 
-    // Копируем содержимое расширенной строки в буфер
     for (i = 0; i < expanded_len; i++) {
         buffer[row * screen_width + start_col + i].Char.AsciiChar = expanded_line[i];
     }
@@ -277,7 +258,7 @@ void fill_console_buffer() {
     // Fill buffer with lines and line numbers (for display only, not for copying)
     for (int i = 0; i < num_lines; i++) {
         int line_number = i + 1;
-        char line_num_str[10];
+        char line_num_str[11];
         snprintf(line_num_str, sizeof(line_num_str), "%d", line_number);
 
         // Calculate padding for line numbers
@@ -337,38 +318,36 @@ void fill_console_buffer() {
     free(buffer);
 }
 
-// Функция для копирования строки без номера
 void copy_line_without_number() {
-    // Убедитесь, что `current_line` не превышает число строк
     if (current_line >= num_lines) {
-        clipboard[0] = '\0'; // Если строка недоступна, очистите буфер
+        clipboard[0] = '\0';
         clipboard_size = 0;
         return;
     }
 
-    // Расчет длины строки без учета номера строки
     int line_length = strlen(lines[current_line]);
-    char number_str[10];
-    int number_length = sprintf(number_str, "%d", current_line + 1); // Длина номера строки
-    int padding = 3; // Дополнительный отступ после номера
+    char number_str[11];
+    int number_length = snprintf(number_str, sizeof(number_str), "%d", current_line + 1);
+	if ((size_t)number_length >= sizeof(number_str)) {
+		// РћР±СЂР°Р±РѕС‚РєР° РѕС€РёР±РєРё
+	}
+    int padding = 3; 
 
-    // Если текущая строка пустая
     if (line_length <= number_length + padding) {
-        clipboard[0] = '\0'; // Очистите буфер, если в строке нет текста
+        clipboard[0] = '\0';
         clipboard_size = 0;
         return;
     }
 
-    // Копирование текста строки без номера и отступа
     int text_start_index = number_length + padding;
     int text_length = line_length - text_start_index;
 
     if (text_length > 0) {
         strncpy(clipboard, &lines[current_line][text_start_index], MIN(text_length, MAX_CLIPBOARD_SIZE));
         clipboard_size = MIN(text_length, MAX_CLIPBOARD_SIZE);
-        clipboard[clipboard_size] = '\0'; // Завершающий нулевой символ
+        clipboard[clipboard_size] = '\0';
     } else {
-        clipboard[0] = '\0'; // Если нет текста для копирования
+        clipboard[0] = '\0';
         clipboard_size = 0;
     }
 }
@@ -382,15 +361,13 @@ void insert_char(char c) {
     size_t line_length = strlen(lines[current_line]);
     
     if (current_col < MAX_LINE_LENGTH - 1) {
-        // Сдвигаем текст вправо, начиная с позиции курсора
         memmove(&lines[current_line][current_col + 1], &lines[current_line][current_col], line_length - current_col + 1);
         
-        // Вставляем символ
         lines[current_line][current_col] = c;
         current_col++;
         
-        fill_console_buffer(); // Перерисовываем буфер
-        update_cursor_position(); // Обновляем позицию курсора
+        fill_console_buffer(); 
+        update_cursor_position(); 
     }
 }
 
@@ -429,52 +406,44 @@ void delete_after_cursor() {
     size_t line_length = strlen(lines[current_line]);
 
     if (current_col < line_length) {
-        // Удаление символа после курсора в текущей строке
         memmove(&lines[current_line][current_col], &lines[current_line][current_col + 1], line_length - current_col);
-        lines[current_line][line_length - 1] = '\0'; // Обновляем конец строки
+        lines[current_line][line_length - 1] = '\0';
     } else if (current_line < num_lines - 1) {
-        // Объединение текущей строки с следующей строкой
         strcat(lines[current_line], lines[current_line + 1]);
 
-        // Удаление строки
         free(lines[current_line + 1]);
         memmove(&lines[current_line + 1], &lines[current_line + 2], (num_lines - current_line - 2) * sizeof(char*));
         num_lines--;
     }
-    fill_console_buffer(); // Перерисовать весь буфер
+    fill_console_buffer(); 
     update_cursor_position();
 }
 
 void new_line() {
     if (num_lines < MAX_LINES - 1) {
-        // Создаем новую строку
         num_lines++;
 
-        // Перемещаем строки вниз, начиная с текущей
         memmove(&lines[current_line + 2], &lines[current_line + 1], (num_lines - current_line - 1) * sizeof(char*));
 
-        // Выделяем память для новой строки
         lines[current_line + 1] = malloc(MAX_LINE_LENGTH);
         
-        // Копируем текст из текущей строки в новую строку, начиная с курсора
         strcpy(lines[current_line + 1], &lines[current_line][current_col]);
 
-        // Очищаем текущую строку до позиции курсора
         lines[current_line][current_col] = '\0';
 
-        // Переходим на новую строку
+        
         current_line++;
-        current_col = 0; // Сбрасываем курсор в начало новой строки
+        current_col = 0; 
 
-        fill_console_buffer(); // Обновляем буфер для отображения
-        update_cursor_position(); // Обновляем позицию курсора
+        fill_console_buffer();
+        update_cursor_position(); 
     }
 }
 
 void save_file(const char* filename) {
     FILE* file = fopen(filename, "w");
-    clearConsole();  // Очищаем экран перед выводом текста
-    hideCursor();    // Прячем курсор
+    clearConsole();  
+    hideCursor();   
     if (file) {
         for (int i = 0; i < num_lines; i++) {
             //if (makefileOpen) replaceSpacesWithTabs(lines[i]);
@@ -484,20 +453,19 @@ void save_file(const char* filename) {
         set_cursor_position(0, screen_height);
 
         //wchar_t text[] = L"File saved successfully.";
-        //centerText(text, TXT_GREEN, BACK_BLACK);  // Выводим текст в центр консоли
+        //centerText(text, TXT_GREEN, BACK_BLACK); 
     } else {
         set_cursor_position(0, screen_height);
         //wchar_t text[] = L"Error saving file.";
-        //centerText(text, TXT_RED, BACK_BLACK);  // Выводим текст в центр консоли
+        //centerText(text, TXT_RED, BACK_BLACK);  
     }
     //Sleep(500);
     //Sleep(100);
 
-    // Очистка консоли и перерисовка интерфейса после паузы
     clearConsole();
     fill_console_buffer();
     
-    showCursor();    // Показываем курсор перед завершением программы
+    showCursor();   
 }
 
 void clear_console() {
@@ -516,19 +484,18 @@ void initialize_lines() {
     lines = malloc(MAX_LINES * sizeof(char*));
     for (int i = 0; i < MAX_LINES; i++) {
         lines[i] = malloc(MAX_LINE_LENGTH);
-        lines[i][0] = '\0'; // Инициализация пустыми строками
+        lines[i][0] = '\0'; 
     }
-    num_lines = 0; // Устанавливаем начальное количество строк
+    num_lines = 0;
 }
 
 void cleanup_lines() {
     for (int i = 0; i < MAX_LINES; i++) {
-        free(lines[i]); // Освобождение памяти для каждой строки
+        free(lines[i]);
     }
-    free(lines); // Освобождение массива строк
+    free(lines);
 }
 
-// Хук-процедура для обработки событий мыши
 LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
     if (nCode >= 0) {
         MOUSEHOOKSTRUCT *mouseInfo = (MOUSEHOOKSTRUCT *)lParam;
@@ -570,7 +537,7 @@ void InitMouseHook() {
 }
 
 void convert_spaces_to_tabs(const char *file_path) {
-    FILE *file = fopen(file_path, "r"); // Открываем файл для чтения
+    FILE *file = fopen(file_path, "r");
     if (!file) {
         perror("Failed to open file!");
         return;
@@ -578,7 +545,6 @@ void convert_spaces_to_tabs(const char *file_path) {
 
     char line[1000];
 
-    // Открываем временный файл для записи
     FILE *temp_file = tmpfile();
     if (!temp_file) {
         perror("Failed to open temp file!");
@@ -586,32 +552,27 @@ void convert_spaces_to_tabs(const char *file_path) {
         return;
     }
 
-    // Читаем строки исходного файла
     while (fgets(line, sizeof(line), file)) {
         char *ptr = line;
 
-        // Создаем временный буфер для новой строки
         char new_line[1000];
         int new_index = 0;
 
         while (*ptr) {
-            // Если находим 4 пробела подряд
             if (strncmp(ptr, "    ", 4) == 0) {
-                new_line[new_index++] = '\t'; // Заменяем на табуляцию
-                ptr += 4; // Пропускаем 4 пробела
+                new_line[new_index++] = '\t'; 
+                ptr += 4;
             } else {
-                new_line[new_index++] = *ptr++; // Копируем символ
+                new_line[new_index++] = *ptr++;
             }
         }
-        new_line[new_index] = '\0'; // Завершаем строку
+        new_line[new_index] = '\0';
 
-        // Записываем строку в временный файл
         fputs(new_line, temp_file);
     }
 
-    fclose(file); // Закрываем исходный файл после чтения
+    fclose(file); 
 
-    // Открываем исходный файл заново для записи
     file = fopen(file_path, "w");
     if (!file) {
         perror("Failed to reopen file for writing!");
@@ -619,35 +580,34 @@ void convert_spaces_to_tabs(const char *file_path) {
         return;
     }
 
-    // Копируем содержимое из временного файла обратно в исходный
-    rewind(temp_file); // Перемещаем указатель в начало временного файла
+    rewind(temp_file); 
 
     char c;
     while ((c = fgetc(temp_file)) != EOF) {
         fputc(c, file);
     }
 
-    fclose(file); // Закрываем исходный файл
-    fclose(temp_file); // Закрываем временный файл
+    fclose(file);
+    fclose(temp_file);
 
     printf("The operation was successful!\n");
 }
 
 void save_and_close_current_file() {
     if (strlen(current_file) > 0) {
-        save_file(current_file); // Сохраняем файл
+        save_file(current_file); 
         printf("File '%s' saved and closed.\n", current_file);
     }
 }
 
 void handle_new_file(char* new_file) {
     if (new_file && strlen(new_file) > 0) {
-        strcpy(current_file, new_file); // Обновляем текущий файл
+        strcpy(current_file, new_file);
         printf("Opening new file: %s\n", current_file);
-        load_file(current_file); // Функция загрузки содержимого файла
+        load_file(current_file); 
     } else {
         printf("No file selected. Reopening previous file: %s\n", current_file);
-        load_file(current_file); // Перезагружаем предыдущий файл
+        load_file(current_file); 
     }
 }
 
@@ -661,18 +621,14 @@ int main(int argc, char* argv[]) {
     GetConsoleMode(hConsoleInput, &mode); 
     mode |= ENABLE_MOUSE_INPUT | ENABLE_EXTENDED_FLAGS; // Add mouse input
     enableVirtualTerminalProcessing(hConsole);
-    // Включаем режим событий мыши
     SetConsoleMode(hConsoleInput, mode);
     INPUT_RECORD inputRecord;
     DWORD events;
 
-    // Установка хука мыши
     InitMouseHook();
 
-    // Инициализируем логирование
-    init_logging(DEBUG); // Включаем логирование
+    init_logging(DEBUG);
 
-    // Обработка флагов версии
     if (argc > 1) {
         if (strcmp(argv[1], "-v") == 0 || strcmp(argv[1], "--v") == 0 ||
             strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-version") == 0) {
@@ -722,7 +678,7 @@ int main(int argc, char* argv[]) {
     // }
 
     if (argc == 3 && strcmp(argv[2], "--repair") == 0) {
-        convert_spaces_to_tabs(argv[1]); // Используем имя файла из аргументов
+        convert_spaces_to_tabs(argv[1]); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         exit(0);
     } else {
         printf("Wrong arguments. Use: clite <filename> --repair\n");
@@ -732,7 +688,6 @@ int main(int argc, char* argv[]) {
     get_console_size();
     clear_console(); 
 
-    // Определение расширения файла
     char* filename = argv[1];
     char* extension = strrchr(filename, '.');
 
@@ -812,31 +767,28 @@ int main(int argc, char* argv[]) {
 		}
 	}
     
-    initialize_lines(); // Инициализация строк
+    initialize_lines();
 
     FILE* file = fopen(argv[1], "r");
     if (!file) {
-        // Файл не существует, создаём новый файл с одной пустой строкой
         file = fopen(argv[1], "w");
         if (file) {
-            fprintf(file, "\n"); // Добавляем пустую строку в файл
+            fprintf(file, "\n"); 
             fclose(file);
         } else {
             perror("Error creating file");
-            cleanup_lines(); // Освобождение ресурсов перед выходом
+            cleanup_lines();
             return 1;
         }
 
-        // Переоткрываем файл для чтения
         file = fopen(argv[1], "r");
         if (!file) {
             perror("Error reopening file");
-            cleanup_lines(); // Освобождение ресурсов перед выходом
+            cleanup_lines();
             return 1;
         }
     }
 
-    // Чтение содержимого файла
     while (fgets(lines[num_lines], MAX_LINE_LENGTH, file) && num_lines < MAX_LINES) {
         lines[num_lines][strcspn(lines[num_lines], "\n")] = 0;
         num_lines++;
@@ -844,21 +796,20 @@ int main(int argc, char* argv[]) {
     fclose(file);
 
     max_line_number_length = max_line_number_length;
-    fill_console_buffer(); // Изначальная отрисовка
+    fill_console_buffer(); 
 
     char* newFile = "";
 
     while (true) {
-        // Читаем события ввода
         ReadConsoleInput(hConsole, &inputRecord, 1, &events);
 
         log_message(LOG_INFO, "START CICLE");
 
         int c = _getch();
-        if ((c == 0 || c == 224) && _kbhit()) { // Обработка стрелок и других расширенных клавиш
+        if ((c == 0 || c == 224) && _kbhit()) {
             c = _getch();
             switch (c) {
-                case 72: // Вверх
+                case 72: 
                     if (current_line > top_line) {
                         current_line--;
                         current_col = MIN(current_col, strlen(lines[current_line]));
@@ -866,7 +817,7 @@ int main(int argc, char* argv[]) {
                         update_cursor_position();
                     }
                     break;
-                case 80: // Вниз
+                case 80:
                     if (current_line < num_lines - 1) {
                         current_line++;
                         current_col = MIN(current_col, strlen(lines[current_line]));
@@ -874,7 +825,7 @@ int main(int argc, char* argv[]) {
                         update_cursor_position();
                     }
                     break;
-                case 75: // Влево
+                case 75:
                     if (current_col > 0) {
                         current_col--;
                         fill_console_buffer();
@@ -886,7 +837,7 @@ int main(int argc, char* argv[]) {
                         update_cursor_position();
                     }
                     break;
-                case 77: // Вправо
+                case 77:
                     if (current_col < strlen(lines[current_line])) {
                         current_col++;
                         fill_console_buffer();
@@ -898,14 +849,14 @@ int main(int argc, char* argv[]) {
                         update_cursor_position();
                     }
                     break;
-                case 83: // Удаление
+                case 83:
                     delete_after_cursor();
                     break;
             }
         } else if (c == '{' || c == '[' || c == '(') {
             insert_char(c);
             insert_char(c == '{' ? '}' : (c == '[' ? ']' : ')'));
-            current_col--; // Перемещаем курсор в середину
+            current_col--;
         } else if (c == 13) { // Enter
             new_line();
         } else if (c == 8) { // Backspace
@@ -917,27 +868,24 @@ int main(int argc, char* argv[]) {
         } else if (c == 17) { // Ctrl+Q
             break;
         } else if (c == 5) { // Ctrl+E
-            //system("cls");
             newFile = startExplorer();
             log_message(LOG_INFO, newFile);
             break;
-            //system("cls");
-        } else { // Обычные печатные символы
+        } else { 
             insert_char(c);
         }
     }
 
     if (newFile != NULL) {
-        char command[256]; // Размер массива можно изменить в зависимости от длины пути к файлу
+        char command[256];
         snprintf(command, sizeof(command), "clite %s", newFile);
         system(command);
     } else {
-        char command[256]; // Размер массива можно изменить в зависимости от длины пути к файлу
+        char command[256];
         snprintf(command, sizeof(command), "clite %s", filename);
         system(command);
     }
 
-    // Восстановление видимости курсора перед выходом
     CONSOLE_CURSOR_INFO cursorInfo;
     GetConsoleCursorInfo(hConsole, &cursorInfo);
     cursorInfo.bVisible = TRUE;
@@ -945,7 +893,7 @@ int main(int argc, char* argv[]) {
 
     clear_console(); 
 
-    cleanup_lines(); // Освобождение ресурсов перед выходом
+    cleanup_lines(); 
 
     return 0;
 }
@@ -957,7 +905,6 @@ void load_file(const char* filename) {
         return;
     }
 
-    // Выделяем память для буфера
     file_buffer = (char*)malloc(MAX_FILE_SIZE);
     if (file_buffer == NULL) {
         perror("Failed to allocate memory");
@@ -965,25 +912,22 @@ void load_file(const char* filename) {
         return;
     }
 
-    // Считываем содержимое файла в буфер
     size_t bytesRead = fread(file_buffer, 1, MAX_FILE_SIZE, file);
     if (ferror(file)) {
         perror("Error reading file");
-        free(file_buffer);  // Освобождаем память при ошибке
+        free(file_buffer);
         file_buffer = NULL;
         fclose(file);
         return;
     }
 
-    file_buffer[bytesRead] = '\0';  // Добавляем нуль-терминатор в конец строки
+    file_buffer[bytesRead] = '\0'; 
 
     fclose(file);
 
-    // Здесь можно обрабатывать содержимое файла, например, вывести его на экран
     printf("File content loaded (%zu bytes):\n%s\n", bytesRead, file_buffer);
 }
 
-// Освободить память, когда она больше не нужна
 void free_file_buffer() {
     if (file_buffer != NULL) {
         free(file_buffer);

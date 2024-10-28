@@ -192,7 +192,10 @@ void loadDirectory(const char *path) {
             entries[totalEntries].isDir = (findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? 1 : 0;
 
             char fullPath[MAX_PATH];
-            snprintf(fullPath, sizeof(fullPath), "%s\\%s", path, findFileData.cFileName);
+            size_t result = snprintf(fullPath, sizeof(fullPath), "%s\\%s", path, findFileData.cFileName);
+			if (result >= sizeof(fullPath)) {
+				// Обработка ошибки
+			}
             getFileInfo(fullPath, &entries[totalEntries]);
 
             totalEntries++;
@@ -217,13 +220,19 @@ void handleEnter() {
     } else if (entries[currentSelection].isDir) {
         // Спускаемся в подкаталог
         char newPath[MAX_PATH];
-        snprintf(newPath, sizeof(newPath), "%s\\%s", currentPath, entries[currentSelection].name);
+        int result = snprintf(newPath, sizeof(newPath), "%s\\%s", currentPath, entries[currentSelection].name);
+		if ((size_t)result >= sizeof(newPath)) {
+			// Обработка ошибки
+		}
         strcpy(currentPath, newPath);
     } else {
         // Если выбранный элемент — файл, формируем путь
         // Используем только текущий каталог, если не поднялись
         char selectedFilePath[MAX_PATH];
-        snprintf(selectedFilePath, sizeof(selectedFilePath), "%s\\%s", currentPath, entries[currentSelection].name);
+        size_t result = snprintf(selectedFilePath, sizeof(selectedFilePath), "%s\\%s", currentPath, entries[currentSelection].name);
+		if (result >= sizeof(selectedFilePath)) {
+			// Обработка ошибки
+		}
         
         printf("Opening file: %s\n", selectedFilePath);  // Выводим путь к файлу
         return;  // Выход из функции
@@ -262,7 +271,10 @@ void createFile() {
 
     // Формируем полный путь к файлу
     char fullPath[MAX_PATH];
-    snprintf(fullPath, sizeof(fullPath), "%s\\%s", currentPath, fileName);
+    size_t result = snprintf(fullPath, sizeof(fullPath), "%s\\%s", currentPath, fileName);
+	if (result >= sizeof(fullPath)) {
+		// Обработка ошибки
+	}
 
     FILE *file = fopen(fullPath, "w");
     if (file) {
@@ -280,7 +292,10 @@ void createDirectory() {
 
     // Формируем полный путь к каталогу
     char fullPath[MAX_PATH];
-    snprintf(fullPath, sizeof(fullPath), "%s\\%s", currentPath, dirName);
+    size_t result = snprintf(fullPath, sizeof(fullPath), "%s\\%s", currentPath, dirName);
+	if (result >= sizeof(fullPath)) {
+		// Обработка ошибки
+	}
 
     if (CreateDirectory(fullPath, NULL) || GetLastError() == ERROR_ALREADY_EXISTS) {
         displayMessageTemporarily("Directory created successfully."); // Изменение здесь
@@ -291,7 +306,10 @@ void createDirectory() {
 
 void confirmDelete(const char* name) {
     char fullPath[MAX_PATH];
-    snprintf(fullPath, sizeof(fullPath), "%s\\%s", currentPath, name); // Формируем полный путь
+    size_t result = snprintf(fullPath, sizeof(fullPath), "%s\\%s", currentPath, name);
+	if (result >= sizeof(fullPath)) {
+		// Обработка ошибки
+	}
 
     int confirm = 0;  // 0 - no, 1 - yes
     while (1) {
@@ -404,7 +422,7 @@ void handleCtrlR() {
     CloseHandle(hReadPipe);
 }
 
-const char* startExplorer() {
+char* startExplorer() {
     static char selectedFilePath[MAX_PATH];  // Для хранения пути к выбранному файлу
 
     setCursorVisibility(0);  // Скрыть курсор
@@ -432,7 +450,10 @@ const char* startExplorer() {
             handleEnter();  // Обработка нажатия Enter
             if (!entries[currentSelection].isDir) {  // Если выбранный элемент — файл
                 // Формируем путь к файлу с нужным форматом
-                snprintf(selectedFilePath, sizeof(selectedFilePath), "%s\\%s", currentPath, entries[currentSelection].name);
+				size_t result = snprintf(selectedFilePath, sizeof(selectedFilePath), "%s\\%s", currentPath, entries[currentSelection].name);
+				if (result < sizeof(selectedFilePath)) {
+					// Обработка ошибки
+				}
                 
                 setCursorVisibility(1);  // Показываем курсор
                 return selectedFilePath;  // Возвращаем путь к выбранному файлу

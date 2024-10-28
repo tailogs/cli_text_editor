@@ -40,6 +40,6 @@ void updateSelection();
 void loadDirectory(const char *path);
 void navigateUp();
 void handleEnter();
-const char* startExplorer();
+char* startExplorer();
 
 #endif // EXPLORER_H
