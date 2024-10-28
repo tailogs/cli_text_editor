@@ -1,115 +1,106 @@
-# Text Editor
+CLITE (CLI TEXT EDITOR) is a simple text editor for Windows with a graphical interface. It supports editing text files with syntax highlighting and various editing operations, including copying text to the clipboard.
 
-## Изображение
+### Why?
 
-![image](https://github.com/user-attachments/assets/e895d593-1032-4f74-8592-85a0b85be659) <br> Рисунок 1. Интерфейс программы
+My primary system is Windows, but I also occasionally use and read about Linux. I enjoy editors like `Vim` and `Nano` (a [Windows fork](https://github.com/okibcn/nano-for-windows)). Besides these, I've used many other editors, but I wanted to create my own, which I'm implementing here. I often use the previously mentioned editors as well as Sublime Text, VSCode, Notepad++, and other full-fledged IDEs.
 
-## Описание
+### Features
 
-CLITE (CLI TEXT EDITOR) — это простой текстовый редактор для Windows с графическим интерфейсом. Поддерживает редактирование текстовых файлов с подсветкой синтаксиса, поддерживает различные операции редактирования и копирование текста в буфер обмена.
+- **Syntax Highlighting**: Support for highlighting keywords, functions, strings, and numbers.
+- **File Management**: Opening, saving, and creating files.
+- **Command-Line Interface**: Working with text through the console.
 
-## Почему?
+### Building
 
-Моя основная система это Windows, но я так же время от времени использую и читаю что-то про linux. Мне нравиться редактор `Vim` и `Nano` ([форк под виндовс](https://github.com/okibcn/nano-for-windows)). Помимо них я использовал множество иных редакторов, но было желания создать и свой редактор, которую я и реализовываю тут. Сам же я использую зачастую в работу редакторы упомянуты ранее и так же sublime text, vscode, notepad++ и другие уже не совсем редакторы, а полноценные IDE.
+To build the project, you need to have [GCC](https://gcc.gnu.org/) and [MinGW](https://www.mingw-w64.org/downloads/) installed (if you are on Windows).
 
-## Функции
+1. **Install necessary tools** (GCC and MinGW).
+2. **Create an executable file**:
 
-- **Подсветка синтаксиса**: Поддержка подсветки ключевых слов, функций, строк и чисел.
-- **Работа с файлами**: Открытие, сохранение и создание файлов.
-- **Интерфейс командной строки**: Работа с текстом через консоль.
-
-## Сборка
-
-Для сборки проекта вам понадобится установленный [GCC](https://gcc.gnu.org/) и [MinGW](https://www.mingw-w64.org/downloads/) (если вы работаете на Windows).
-
-1. **Установите необходимые инструменты** (GCC и MinGW).
-
-2. **Создайте исполняемый файл**:
-
-   Откройте командную строку и перейдите в каталог, содержащий ваш исходный код и `Makefile`. Выполните команду:
+   Open the command prompt and navigate to the directory containing your source code and `Makefile`. Run the command:
 
    ```bash
    make
    ```
 
-   Это соберет проект и создаст исполняемый файл `text_editor.exe`.
+   This will build the project and create the executable file `text_editor.exe`.
 
-## Использование
+### Usage
 
-1. **Запустите приложение открытием нового или существующего файла**, указав его имя в командной строке:
+1. **Run the application by opening a new or existing file**, specifying its name in the command line:
 
    ```bash
    clite.exe <filename>
    ```
 
-2. **Используйте клавиши** для редактирования текста:
-   - Введите текст в файл.
-   - Используйте стрелки вверх и вниз для навигации по строкам.
-   - Нажмите `Enter` для добавления новой строки.
-   - Нажмите `Backspace` для удаления символа.
-   - Нажмите `Tab` для вставки табуляции.
+2. **Use keys to edit text**:
+   - Type text into the file.
+   - Use the up and down arrows to navigate through lines.
+   - Press `Enter` to add a new line.
+   - Press `Backspace` to delete a character.
+   - Press `Tab` to insert a tab.
 
-3. **Копирование текста** в буфер обмена:
-   - При нахождении на нужной строке, нажмите `Ctrl+C` для копирования текста строки (пока что нумерация строк тоже копируется).
+3. **Copying text to the clipboard**:
+   - When on the desired line, press `Ctrl+C` to copy the line's text (line numbers are also copied for now).
 
-4. **Сохраните изменения** в файл:
+4. **Save changes to a file**:
 
-   Нажмите `Ctrl+S` для сохранения файла
-   Нажмите `Ctrl+Q` для выхода из файла или проводника.
-   Нажмите `Ctrl+E` для открытия проводника.
-   Нажмите `Ctrl+F` будучи в проводнике для создания файла
-   Нажмите `Ctrl+C` будучи в проводнике для создания каталога
-   Нажмите `Ctrl+D` будучи в проводнике для удаления файла или каталога
+   Press `Ctrl+S` to save the file.
+   Press `Ctrl+Q` to exit from the file or explorer.
+   Press `Ctrl+E` to open the explorer.
+   Press `Ctrl+F` while in the explorer to create a file.
+   Press `Ctrl+C` while in the explorer to create a directory.
+   Press `Ctrl+D` while in the explorer to delete a file or directory.
 
-**Отображение версии**:
-  - `clite -v` или `clite --v` или `clite -version` или `clite --version`
+**Display version**:
+  - `clite -v`, `clite --v`, `clite -version`, or `clite --version`
 
-**Замена пробелов на табуляции. Подходит для Makefile**
+**Replacing spaces with tabs. Suitable for Makefile**
   - `clite <filename> --repair`
 
-## Очистка
+### Cleaning Up
 
-Для очистки собранных файлов выполните команду:
+To clean up built files, run:
 
 ```bash
 make clean
 ```
 
-Это удалит объектные файлы и исполняемый файл.
+This will remove object files and the executable.
 
-## Примечания
+### Notes
 
-- Убедитесь, что все зависимости установлены правильно, чтобы избежать проблем с компиляцией или запуском.
-- Если вы хотите корректной работы и тем более отображения русского языка, то ставьте кодировку у `main.c` файла на `Windows 1251`.
+- Ensure all dependencies are installed correctly to avoid compilation or runtime issues.
+- For correct operation and especially for displaying Russian characters, set the encoding of `main.c` file to `Windows 1251`.
 
-## Ошибки и предупреждения
+### Errors and Warnings
 
-- Присутствуют предупреждения и требуют исправления. Кретических ошибок не имеется.
+Warnings are present and need fixing. There are no critical errors.
 
-## Планы на будущее
+### Future Plans
 
-- **Редактирование текста**: Возможность ввода, удаления и вставки символов и строк.
-- **Копирование текста**: Копирование текста в буфер обмена без номера строки.
-- **Новый файл**: Если файл не имеется и он создан, но в него не вписан код, то мы должны отменять создание этого файла путем удаления.
-- **Мышь**: Осуществить перемешение каретки по средствам движения мыши по строке и по строкам.
-- **Загаловочные файлы**: Исправить подсветку загаловочных файлов и `#include`, которые перестали работать когда я внес все функции языка Си.
-- **Подергивание**: Убрать поддергивания консоли при движении в нем каретки по строкам.
-- **Оптимизация и улучшение читабельности кода**: Нужно сделать код проще, последовательнее и читаемее, а программу быстрее и приятнее в использовании. Минимализировать число ошибок. Учитывать нештатное поведение и возможное появление непредвиденных ошибок.
-- **Настройки**: Реализовать настройки подобные `vim` и `nano` и удобство их открытия `vim ~/.vimrc` и `nano ~/.nanorc`.
-- **Интеграции**: Сделать возможность интеграции плагинов, модов, синтаксиса и прочего в программе.
-- **Макро-язык**: Реализовать упрощенную версию яп специально для программы дабы упростить работу с настройкам и интеграцией.
-- **Скобки**: Упростить подсветку скобок разной вложенности. Это особенно будет полезно для lisp программистов. Ну и добавить комментарии вида `;`, `;;`, `;;;` и `;;;;` тоже для них.
-- **Подсветка синтаксиса**: Сделать подсветку ещё большему числу языков программирования.
-- **Языки**: Сделать поддержку других языков, таких как русский, японский, китайский и прочие, но я этим заниматься не буду. Для меня это будет повод подучить английский. Но если кто-то реализует поддержку языков, то я против не буду и обязательно запихну в свою программу.
+- **Text Editing**: Ability to input, delete, and insert characters and lines.
+- **Text Copying**: Copying text to clipboard without line numbers.
+- **New File**: If a file is created but no code is written in it, we should cancel its creation by deleting it.
+- **Mouse Support**: Implement cursor movement using mouse across lines.
+- **Header Files**: Fix syntax highlighting for header files and `#include`, which stopped working after adding all C language functions.
+- **Flickering**: Remove flickering in console when moving cursor across lines.
+- **Code Optimization and Readability Improvements**: Simplify code, make it more consistent and readable, speed up the program, minimize errors, consider edge cases and unexpected errors.
+- **Settings**: Implement settings similar to `vim` and `nano`, making them easy to open (`vim ~/.vimrc`, `nano ~/.nanorc`).
+- **Integrations**: Allow integration of plugins, mods, syntax highlighting, etc., into the program.
+- **Macro Language**: Implement a simplified programming language specifically for this program to ease configuration and integration work.
+- **Bracket Highlighting**: Simplify highlighting of brackets of different nesting levels; this will be particularly useful for Lisp programmers. Also add comments like `;`, `;;`, `;;;`, and `;;;;`.
+- **Syntax Highlighting**: Expand syntax highlighting support for more programming languages.
+- **Language Support**: Add support for other languages such as Russian, Japanese, Chinese, etc., but I won't be working on this myself. It will motivate me to improve my English. However, if someone else implements language support, I won't oppose it and will definitely include it in my program.
 
-## Как добавить поддержку своего синтаксиса языка?
+### How to Add Support for Your Language Syntax?
 
-Очень просто! Только с комментариями все плохо, но все базовые комментарии я уже добавил, если вам нужно специфичный добавить, то пишите мне или сделайте это сами, но потом не забудьте поделиться - так вы сделаете и другим приятно! :)
+It's very simple! There are some issues with comments, but I've already added basic comments; if you need specific ones added, feel free to contact me or do it yourself but remember to share afterward—this way you’ll make others happy too! :)
 
-Чтобы добавить свой язык вам нужно открыть файлы `syntax.c`, `syntax.h` и `main.c`. Не бойтесь, добавить там нужно будет совсем немного кода. По порядку:
+To add your language support you need to open files `syntax.c`, `syntax.h`, and `main.c`. Don’t worry; you’ll only need to add a little code. Here’s how:
 
-1. Откройте файл `syntax.c` и перед функцией `add_syntax_rules_all` которая находиться в самом конце добавьте функцию `add_syntax_rules`, но дописав через `_` нижнее подчеркивание название языка, например `add_syntax_rules_java`.
-2. Скопируйте тело любой из функций выше, которые расписывают свой синтаксис и измените под себя. Например у примера функции яп (языка программирования) `java` было такая реализация тела:
+1. Open the file `syntax.c` and before the function `add_syntax_rules_all`, which is at the very end, add a function called `add_syntax_rules_<your_language_name>`.
+2. Copy the body of any of the above functions that outline their syntax and modify it according to your needs. For instance, here’s how it looks for Java:
 
 	```java
 	void add_syntax_rules_java() {
@@ -140,10 +131,10 @@ make clean
 	}
 	```
 
-3. Вы редактируете это содержимое поменяв массив `keywords`, `functions`, `headers` на свои функции, загаловки и ключевые слова. Можете указать и стиль комментариев в конце, но это не важно, но лучше сделать для того чтобы точно работало.
-4. Возьмите имя функции и впишите его в конец тела функции `add_syntax_rules_all` чтобы другие могли сразу наглядно видеть какие реализации языков присутсвуют в коде.
-5. Добавьте прототип функции в `syntax.h`. Например у `java` примера выше этот прототип такой `void add_syntax_rules_java();`
-6. Откройте файл `main.c` и в главной функции `main` добавьте в тело условия `if (extension)` условие вида:
+3. Edit this content by changing arrays like `keywords`, `functions`, and `headers` according to your functions, headers, and keywords. You can specify comment styles at the end as well; it’s not crucial but better for proper functioning.
+4. Take your function name and write it at the end of the body of function `add_syntax_rules_all` so others can see which language implementations are present in the code at a glance.
+5. Add function prototype in `syntax.h`. For example for Java above it would be like this: `void add_syntax_rules_java();`
+6. Open file `main.c` and in main function add an if condition like this:
 
 	```c
 	else if (strcmp(extension, ".java") == 0) {
@@ -151,28 +142,30 @@ make clean
 	}
 	```
 
-	Тут мы просто добавили в функцию `strcmp` вторым аргументом расширение нашего языка, а потом внутрь тела `if` вписали функцию которую создали ранее, в нашем случае `add_syntax_rules_java`.
+	This simply adds an extension check in function strcmp as its second argument while calling your previously created function inside that if block.
 
-8. Скомпируйте программу и протестируйте подсветку синтаксиса создав файл с вашим расширением языка и введя в него код любой
+8. Compile the program and test syntax highlighting by creating a file with your language's extension and entering any code into it.
 
-## Изменения версий
-- **v1.0**: Первая версия. Весь базовый функционал готов.
-- **v1.1**: Добавлено больше поддерживаемых языков программирования, разделен на файлы код, улучшен функционал покраски цвета.
-- **v1.1.1**: Исправлено отсутствие появления курсора при выходе из программы версии.
-- **v1.1.2**: Исправлено отображение табуляции версии
-- **v1.1.3**: Исправлены все предупреждения, отображаемые компилятором версии.
-- **v1.1.4**: Изменена кодировка файла на `Windows 1251` и исправлен вывод русских символов.
-- **v1.1.5**: Исправлено предупреждение компилятора.
-- **v1.1.6**: Расширен список ключевых слов, функций и заголовков на языках C и C++.
-- **v1.2**: Улучшена покраска символов в консоли и курсор.
-- **v1.2.3**: Теперь можно пробелы в Makefile (и других файлах) заменить табуляцией такой командой `clite <filename> --repair`
-- **v1.3.4**: Добавлен проводник, который позволяет легче ориентироваться в каталоге проекта.
+### Version Changes
+- **v1.0**: Initial version with all basic functionality ready.
+- **v1.1**: Added more supported programming languages; separated code into files; improved color highlighting functionality.
+- **v1.1.1**: Fixed cursor not appearing upon exiting program version.
+- **v1.1.2**: Fixed tab display issue in version output.
+- **v1.1.3**: Corrected all warnings displayed by compiler in version output.
+- **v1.1.4**: Changed file encoding to Windows 1251; fixed display of Russian characters.
+- **v1.1.5**: Fixed compiler warning issue.
+- **v1.1.6**: Expanded list of keywords, functions, and headers for C and C++ languages.
+- **v1.2**: Improved character coloring in console along with cursor visibility.
+- **v1.2.3**: Now spaces in Makefile (and other files) can be replaced with tabs using command: clite <filename> --repair
+- **v1.3.4**: Added an explorer that makes navigating project directories easier.
 
-## Лицензия
+### License
 
-Этот проект является открытым и свободно распространяемым по лицензии **MIT**. Вы можете использовать и модифицировать его в соответствии с вашими потребностями.
+This project is open-source and freely distributed under the MIT license. You can use and modify it according to your needs.
 
 ---
 
-Разработано [Tailogs](https://github.com/tailogs).
+Developed by [Tailogs](https://github.com/tailogs).
 
+Citations:
+[1] https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/15576043/0db77755-882f-4c84-90be-743a20035123/paste.txt
