@@ -16,16 +16,32 @@
 #define KEY_DOWN 80
 #define KEY_ENTER 13
 #define KEY_ESC 27
-#define KEY_CTRL_Q 17 // Ctrl + Q
-#define KEY_CTRL_F 6  // Ctrl + F
-#define KEY_CTRL_C 3  // Ctrl + C
-#define KEY_CTRL_D 4  // Ctrl + D
-#define KEY_CTRL_R 18 // Ctrl + R
+#define KEY_CTRL_Q            17   // Ctrl + Q
+#define KEY_CTRL_F            6    // Ctrl + F
+#define KEY_CTRL_C            3    // Ctrl + C
+#define KEY_CTRL_D            4    // Ctrl + D
+#define KEY_CTRL_R            18   // Ctrl + R
 
-// Цвета для отображения
-#define COLOR_DEFAULT 7
-#define COLOR_SELECTED 112
-#define COLOR_DIRECTORY 9
+#define COLOR_DEFAULT         7    // Белый на черном фоне
+#define COLOR_SELECTED        112  // Светло-синий фон
+#define COLOR_DIRECTORY       9    // Синий
+#define COLOR_YELLOW          14   // Желтый
+#define COLOR_BLACK           0    // Черный
+#define COLOR_BLUE            1    // Синий
+#define COLOR_GREEN           2    // Зеленый
+#define COLOR_CYAN            3    // Голубой
+#define COLOR_RED             4    // Красный
+#define COLOR_MAGENTA         5    // Пурпурный
+#define COLOR_BROWN           6    // Коричневый
+#define COLOR_LIGHT_GRAY      7    // Светло-серый
+#define COLOR_DARK_GRAY       8    // Темно-серый
+#define COLOR_LIGHT_BLUE      9    // Светло-синий
+#define COLOR_LIGHT_GREEN     10   // Светло-зеленый
+#define COLOR_LIGHT_CYAN      11   // Светло-голубой
+#define COLOR_LIGHT_RED       12   // Светло-красный
+#define COLOR_LIGHT_MAGENTA   13   // Светло-пурпурный
+#define COLOR_LIGHT_YELLOW    14   // Светло-желтый
+#define COLOR_WHITE           15   // Белый
 
 FileEntry entries[256];
 int totalEntries = 0;
@@ -141,21 +157,26 @@ void clearScreen() {
 void drawDirectory() {
     clearScreen(); // Clear the screen once before output
 
-    // Draw header with borders
-    moveCursor(0, 0);
-    setConsoleColor(COLOR_DEFAULT);
-    printf("+--------------------------------+------------+--------------------+--------------------+\n");
-    printf("| File System                    | Storage    | Creation Date      | Modification Date  |\n");
-    printf("+--------------------------------+------------+--------------------+--------------------+\n");
-
     // Display current path
-    moveCursor(0, 3); // Move cursor below the header
+    moveCursor(0, 0); // Move cursor below the header
     clearLine();
-    printf("Path: %s\n", currentPath);
+    printf("+--------------------------------+--------------+--------------------+--------------------+\n");
+    printf("| Path -> ");
+    setConsoleColor(COLOR_CYAN); // Устанавливаем желтый цвет для пути
+    printf("%s ", currentPath); // Выводим путь
+    setConsoleColor(COLOR_DEFAULT); // Сбрасываем цвет после вывода пути
+    printf("\n"); // Закрываем строку
+
+    // Draw header with borders
+    moveCursor(0, 2);
+    setConsoleColor(COLOR_DEFAULT);
+    printf("+--------------------------------+--------------+--------------------+--------------------+\n");
+    printf("| File System                    |   Storage    |   Creation Date    |  Modification Date |\n");
+    printf("+--------------------------------+--------------+--------------------+--------------------+\n");
 
     // Move cursor for displaying files with additional information
     for (int i = 0; i < totalEntries; i++) {
-        moveCursor(0, i + 4);  // +4, as first three lines are header and path
+        moveCursor(0, i + 5);  // + 5, as first three lines are header and path
         clearLine();
 
         // Set color based on file type
@@ -170,24 +191,24 @@ void drawDirectory() {
         char fileSizeStr[20];
         formatFileSize(entries[i].fileSize, fileSizeStr);
         
-        // Output file information with borders
-        printf("| %-30s | %-10s | %-18s | %-18s |\n", entries[i].name, fileSizeStr, entries[i].creationDate, entries[i].modificationDate);
+        // Output file information with borders and center-aligned dates
+        printf("| %-30s | %12s | %18s | %18s |\n", entries[i].name, fileSizeStr, entries[i].creationDate, entries[i].modificationDate);
         
         setConsoleColor(COLOR_DEFAULT); // Reset color after output
     }
 
     // Draw bottom border
-    moveCursor(0, totalEntries + 4); // Move cursor to the line after the last entry
-    printf("+--------------------------------+------------+--------------------+--------------------+\n");
+    moveCursor(0, totalEntries + 5); // Move cursor to the line after the last entry
+    printf("+--------------------------------+--------------+--------------------+--------------------+\n");
 }
 
 void updateSelection() {
-    // Если есть предыдущее выделение, очищаем его
+    // If there is a previous selection, clear it
     if (previousSelection != -1) {
-        moveCursor(0, previousSelection + 4); // +4 для учета заголовка и пути
-        clearLine(); // Очищаем строку
+        moveCursor(0, previousSelection + 5); // + 5 to account for header and path
+        clearLine(); // Clear the line
 
-        // Восстанавливаем цвет предыдущего элемента
+        // Restore the color of the previous entry
         if (entries[previousSelection].isDir) {
             setConsoleColor(COLOR_DIRECTORY);
         } else {
@@ -196,22 +217,24 @@ void updateSelection() {
 
         char fileSizeStr[20];
         formatFileSize(entries[previousSelection].fileSize, fileSizeStr);
-        printf("| %-30s | %-10s | %-18s | %-18s |\n", entries[previousSelection].name, fileSizeStr, entries[previousSelection].creationDate, entries[previousSelection].modificationDate);
+        // Update format specifier for storage column width and center-aligned dates
+        printf("| %-30s | %12s | %18s | %18s |\n", entries[previousSelection].name, fileSizeStr, entries[previousSelection].creationDate, entries[previousSelection].modificationDate);
     }
 
-    // Устанавливаем новое выделение
-    moveCursor(0, currentSelection + 4); // +4 для учета заголовка и пути
-    clearLine(); // Очищаем строку для нового выделения
+    // Set new selection
+    moveCursor(0, currentSelection + 5); // + 5 to account for header and path
+    clearLine(); // Clear the line for new selection
 
-    setConsoleColor(COLOR_SELECTED); // Устанавливаем цвет для выделенного элемента
+    setConsoleColor(COLOR_SELECTED); // Set color for the selected entry
 
     char fileSizeStr[20];
     formatFileSize(entries[currentSelection].fileSize, fileSizeStr);
-    printf("| %-30s | %-10s | %-18s | %-18s |\n", entries[currentSelection].name, fileSizeStr, entries[currentSelection].creationDate, entries[currentSelection].modificationDate);
+    // Update format specifier for storage column width and center-aligned dates
+    printf("| %-30s | %12s | %18s | %18s |\n", entries[currentSelection].name, fileSizeStr, entries[currentSelection].creationDate, entries[currentSelection].modificationDate);
 
-    setConsoleColor(COLOR_DEFAULT); // Сбрасываем цвет после вывода
+    setConsoleColor(COLOR_DEFAULT); // Reset color after output
 
-    previousSelection = currentSelection; // Обновляем предыдущее выделение
+    previousSelection = currentSelection; // Update previous selection
 }
 
 void loadDirectory(const char *path) {

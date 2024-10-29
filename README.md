@@ -74,7 +74,6 @@ This will remove object files and the executable.
 ### Notes
 
 - Ensure all dependencies are installed correctly to avoid compilation or runtime issues.
-- For correct operation and especially for displaying Russian characters, set the encoding of `main.c` file to `Windows 1251`.
 
 ### Errors and Warnings
 
@@ -170,6 +169,3 @@ This project is open-source and freely distributed under the MIT license. You ca
 ---
 
 Developed by [Tailogs](https://github.com/tailogs).
-
-Citations:
-[1] https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/15576043/0db77755-882f-4c84-90be-743a20035123/paste.txt

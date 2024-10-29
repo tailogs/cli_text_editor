@@ -17,7 +17,7 @@
 #define MAX_CLIPBOARD_SIZE 10000
 #define MAX_FILE_SIZE 1024 * 1024  // (1 MB)
 
-#define VERSION "1.3.7"
+#define VERSION "1.3.8"
 
 char** lines;
 int num_lines = 0;
@@ -106,7 +106,7 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
     int num_comments = 0;
 
     i = 0;
-    while (i < expanded_len) {\
+    while (i < expanded_len) {
         if (expanded_line[i] == '/' && i + 1 < expanded_len && (expanded_line[i + 1] == '/' || expanded_line[i + 1] == '*')) {
             if (expanded_line[i + 1] == '/') {
                 comments[num_comments].start = i;
@@ -170,7 +170,7 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
             ptr = strstr(ptr + keyword_len, rule.keyword); 
         }
     }
-\
+
     for (i = 0; i < expanded_len; i++) {
         if (expanded_line[i] == 'i' && i + 1 < expanded_len && expanded_line[i + 1] == 'f' && 
             (i == 0 || isspace(expanded_line[i - 1]) || expanded_line[i - 1] == '_') && 
@@ -188,7 +188,7 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
             }
         }
     }
-\
+
     i = 0;
     while (i < expanded_len) {
         if (isdigit(expanded_line[i])) {
@@ -204,7 +204,7 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
             i++;
         }
     }
-\
+
     i = 0;
     while (i < expanded_len) {
         if (expanded_line[i] == '"') {
@@ -222,7 +222,7 @@ void apply_syntax_highlighting(const char* line, CHAR_INFO* buffer, int row, int
         }
         i++;
     }
-\
+
     i = 0;
     while (i < expanded_len) {
         if (expanded_line[i] == '\'') {
