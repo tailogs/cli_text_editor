@@ -34,6 +34,8 @@ int consoleTop, consoleBottom, consoleLeft, consoleRight;
 bool makefileOpen = false;
 char current_file[MAX_PATH] = ""; 
 char* file_buffer = NULL;  
+bool fileCreatedByProgram = false; // флаг для отслеживания создания файла
+bool textEntered = false; // флаг для проверки ввода текста
 
 HANDLE hConsole;
 COORD cursorPosition;
@@ -681,17 +683,17 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // if (argc != 2) {
-    //     char usage[100]; 
-    //     sprintf(usage, "     | Usage: %s <filename>", argv[0]);
-    //     print_colored_symbol_and_text("|", TXT_BLACK, BACK_WHITE, " -> ERROR:", TXT_LIGHT_WHITE, BACK_LIGHT_RED);
-    //     printf("\n");
-    //     print_colored_symbol_and_text(".", TXT_BLACK, BACK_WHITE, usage, TXT_LIGHT_WHITE, BACK_LIGHT_RED);
-    //     return 1;
-    // }
+    if (argc == 1 || argc > 3) {
+        char usage[100]; 
+        sprintf(usage, "     | Usage: %s <filename>", argv[0]);
+        print_colored_symbol_and_text("|", TXT_BLACK, BACK_WHITE, " -> ERROR:", TXT_LIGHT_WHITE, BACK_LIGHT_RED);
+        printf("\n");
+        print_colored_symbol_and_text(".", TXT_BLACK, BACK_WHITE, usage, TXT_LIGHT_WHITE, BACK_LIGHT_RED);
+        return 1;
+    }
 
     if (argc == 3 && strcmp(argv[2], "--repair") == 0) {
-        convert_spaces_to_tabs(argv[1]); // ���������� ��� ����� �� ����������
+        convert_spaces_to_tabs(argv[1]); 
         exit(0);
     } else {
         printf("Wrong arguments. Use: clite <filename> --repair\n");
@@ -788,6 +790,7 @@ int main(int argc, char* argv[]) {
         if (file) {
             fprintf(file, "\n"); 
             fclose(file);
+            fileCreatedByProgram = true; // отмечаем, что файл создан программой
         } else {
             perror("Error creating file");
             cleanup_lines();
@@ -812,6 +815,8 @@ int main(int argc, char* argv[]) {
     fill_console_buffer(); 
 
     char* newFile = "";
+
+    // основной цикл программы...
 
     while (true) {
         ReadConsoleInput(hConsole, &inputRecord, 1, &events);
@@ -885,6 +890,7 @@ int main(int argc, char* argv[]) {
             log_message(LOG_INFO, newFile);
             break;
         } else { 
+            textEntered = true; // если введен хотя бы один символ, флаг устанавливается
             insert_char(c);
         }
     }
@@ -897,6 +903,15 @@ int main(int argc, char* argv[]) {
         char command[256];
         snprintf(command, sizeof(command), "clite %s", filename);
         system(command);
+    }
+	
+	// Удаляем файл, если он пуст и был создан программой
+    if (fileCreatedByProgram && !textEntered) {
+        if (remove(filename) == 0) {
+            printf("Файл удален, так как он пуст и был создан программой.\n");
+        } else {
+            perror("Ошибка при удалении файла");
+        }
     }
 
     CONSOLE_CURSOR_INFO cursorInfo;
