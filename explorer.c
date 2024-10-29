@@ -7,7 +7,9 @@
 #include <string.h>
 #include <sys/stat.h>  // для получения информации о файле
 #include <time.h>
+#include <shlwapi.h> // Для PathCombine
 #include "explorer.h"
+#include "logger.h"
 #include "main.h"
 
 #define KEY_UP 72
@@ -32,6 +34,8 @@ char currentPath[MAX_PATH];
 
 // Для хранения предыдущего выбора
 int previousSelection = -1;
+
+char savedPath[MAX_PATH] = ""; // Инициализируем пустой путь
 
 // Добавим пайпы для ввода/вывода
 HANDLE hReadPipe, hWritePipe;
@@ -64,6 +68,32 @@ void clearLine() {
     GetConsoleScreenBufferInfo(hConsole, &csbi);
     FillConsoleOutputCharacter(hConsole, ' ', csbi.dwSize.X, csbi.dwCursorPosition, &written);
     SetConsoleCursorPosition(hConsole, csbi.dwCursorPosition);
+}
+
+// Загрузка сохраненного пути
+void loadSavedPath() {
+    FILE *file = fopen(".clite_saved_path.txt", "r");
+    if (file != NULL) {
+        fgets(savedPath, sizeof(savedPath), file);
+        // Убираем символ новой строки, если он есть
+        savedPath[strcspn(savedPath, "\n")] = 0;
+        fclose(file);
+        
+        // Устанавливаем загруженный путь как текущий
+        strcpy(currentPath, savedPath); // Установите путь, загруженный из файла
+    } else {
+        // Если файл не найден, сохраняем текущий путь
+        _getcwd(currentPath, sizeof(currentPath));
+        strcpy(savedPath, currentPath);
+    }
+}
+
+void saveCurrentPath() {
+    FILE *file = fopen(".clite_saved_path.txt", "w");
+    if (file != NULL) {
+        fprintf(file, "%s\n", currentPath);
+        fclose(file);
+    }
 }
 
 // Функция для форматирования размера файлов в человекочитаемый вид
@@ -104,22 +134,31 @@ void getFileInfo(const char *path, FileEntry *entry) {
     }
 }
 
+void clearScreen() {
+    system("cls"); // Очистка экрана
+}
+
 void drawDirectory() {
+    clearScreen(); // Clear the screen once before output
+
+    // Draw header with borders
     moveCursor(0, 0);
+    setConsoleColor(COLOR_DEFAULT);
+    printf("+--------------------------------+------------+--------------------+--------------------+\n");
+    printf("| File System                    | Storage    | Creation Date      | Modification Date  |\n");
+    printf("+--------------------------------+------------+--------------------+--------------------+\n");
+
+    // Display current path
+    moveCursor(0, 3); // Move cursor below the header
     clearLine();
     printf("Path: %s\n", currentPath);
 
-    // Очищаем старое содержимое
-    for (int i = totalEntries; i < 256; i++) {
-        moveCursor(0, i + 1);
-        clearLine();
-    }
-
-    // Перемещаем курсор для отображения файлов с доп. информацией
+    // Move cursor for displaying files with additional information
     for (int i = 0; i < totalEntries; i++) {
-        moveCursor(0, i + 1);  // +1, так как первая строка - это путь
+        moveCursor(0, i + 4);  // +4, as first three lines are header and path
         clearLine();
-        
+
+        // Set color based on file type
         if (i == currentSelection) {
             setConsoleColor(COLOR_SELECTED);
         } else if (entries[i].isDir) {
@@ -130,17 +169,25 @@ void drawDirectory() {
 
         char fileSizeStr[20];
         formatFileSize(entries[i].fileSize, fileSizeStr);
-        printf("%-30s %10s %20s %20s\n", entries[i].name, fileSizeStr, entries[i].creationDate, entries[i].modificationDate);
-
-        setConsoleColor(COLOR_DEFAULT);
+        
+        // Output file information with borders
+        printf("| %-30s | %-10s | %-18s | %-18s |\n", entries[i].name, fileSizeStr, entries[i].creationDate, entries[i].modificationDate);
+        
+        setConsoleColor(COLOR_DEFAULT); // Reset color after output
     }
+
+    // Draw bottom border
+    moveCursor(0, totalEntries + 4); // Move cursor to the line after the last entry
+    printf("+--------------------------------+------------+--------------------+--------------------+\n");
 }
 
 void updateSelection() {
-    if (previousSelection != -1 && previousSelection != currentSelection) {
-        moveCursor(0, previousSelection + 1);
-        clearLine();
+    // Если есть предыдущее выделение, очищаем его
+    if (previousSelection != -1) {
+        moveCursor(0, previousSelection + 4); // +4 для учета заголовка и пути
+        clearLine(); // Очищаем строку
 
+        // Восстанавливаем цвет предыдущего элемента
         if (entries[previousSelection].isDir) {
             setConsoleColor(COLOR_DIRECTORY);
         } else {
@@ -149,23 +196,26 @@ void updateSelection() {
 
         char fileSizeStr[20];
         formatFileSize(entries[previousSelection].fileSize, fileSizeStr);
-        printf("%-30s %10s %20s %20s\n", entries[previousSelection].name, fileSizeStr, entries[previousSelection].creationDate, entries[previousSelection].modificationDate);
+        printf("| %-30s | %-10s | %-18s | %-18s |\n", entries[previousSelection].name, fileSizeStr, entries[previousSelection].creationDate, entries[previousSelection].modificationDate);
     }
 
-    moveCursor(0, currentSelection + 1);
-    setConsoleColor(COLOR_SELECTED);
-    clearLine();
+    // Устанавливаем новое выделение
+    moveCursor(0, currentSelection + 4); // +4 для учета заголовка и пути
+    clearLine(); // Очищаем строку для нового выделения
+
+    setConsoleColor(COLOR_SELECTED); // Устанавливаем цвет для выделенного элемента
 
     char fileSizeStr[20];
     formatFileSize(entries[currentSelection].fileSize, fileSizeStr);
-    printf("%-30s %10s %20s %20s\n", entries[currentSelection].name, fileSizeStr, entries[currentSelection].creationDate, entries[currentSelection].modificationDate);
+    printf("| %-30s | %-10s | %-18s | %-18s |\n", entries[currentSelection].name, fileSizeStr, entries[currentSelection].creationDate, entries[currentSelection].modificationDate);
 
-    setConsoleColor(COLOR_DEFAULT);
+    setConsoleColor(COLOR_DEFAULT); // Сбрасываем цвет после вывода
 
-    previousSelection = currentSelection;
+    previousSelection = currentSelection; // Обновляем предыдущее выделение
 }
 
 void loadDirectory(const char *path) {
+    clearScreen(); // Очистка консоли перед загрузкой
     WIN32_FIND_DATA findFileData;
     HANDLE hFind;
     char searchPath[MAX_PATH];
@@ -192,10 +242,12 @@ void loadDirectory(const char *path) {
             entries[totalEntries].isDir = (findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? 1 : 0;
 
             char fullPath[MAX_PATH];
-            size_t result = snprintf(fullPath, sizeof(fullPath), "%s\\%s", path, findFileData.cFileName);
-			if (result >= sizeof(fullPath)) {
-				// Обработка ошибки
-			}
+			size_t result = snprintf(fullPath, sizeof(fullPath), "%s\\%s", path, findFileData.cFileName);
+            if (result >= sizeof(fullPath)) {
+                // Обработка ошибки: путь слишком длинный или произошла другая ошибка
+                fprintf(stderr, "Error: Path is too long or another error occurred.\n");
+                continue; // Пропускаем текущий файл
+            }
             getFileInfo(fullPath, &entries[totalEntries]);
 
             totalEntries++;
@@ -203,6 +255,8 @@ void loadDirectory(const char *path) {
     } while (FindNextFile(hFind, &findFileData) != 0);
 
     FindClose(hFind);
+    
+    drawDirectory(); // Перерисовываем интерфейс после загрузки
 }
 
 void navigateUp() {
@@ -433,6 +487,7 @@ char* startExplorer() {
         return NULL;
     }
 
+    loadSavedPath(); // Загружаем сохраненный путь при старте программы
     loadDirectory(currentPath);  // Загружаем содержимое директории
     drawDirectory();  // Отрисовываем интерфейс
 
@@ -448,15 +503,15 @@ char* startExplorer() {
             updateSelection();  // Обновляем выделение в интерфейсе
         } else if (c == KEY_ENTER) {
             handleEnter();  // Обработка нажатия Enter
+			saveCurrentPath(); // Сохраняем путь после открытия файла или перехода в каталог
             if (!entries[currentSelection].isDir) {  // Если выбранный элемент — файл
-                // Формируем путь к файлу с нужным форматом
-				size_t result = snprintf(selectedFilePath, sizeof(selectedFilePath), "%s\\%s", currentPath, entries[currentSelection].name);
-				if (result < sizeof(selectedFilePath)) {
-					// Обработка ошибки
-				}
-                
-                setCursorVisibility(1);  // Показываем курсор
-                return selectedFilePath;  // Возвращаем путь к выбранному файлу
+                size_t result = snprintf(selectedFilePath, sizeof(selectedFilePath), "%s\\%s", currentPath, entries[currentSelection].name);
+                if (result < sizeof(selectedFilePath)) {
+                    setCursorVisibility(1);  // Показываем курсор
+                    return selectedFilePath;  // Возвращаем путь к выбранному файлу
+                } else {
+                    displayMessageTemporarily("Error forming file path."); // Сообщение об ошибке
+                }
             }
         } else if (c == KEY_ESC) {
             navigateUp();  // Переход на уровень выше
@@ -465,29 +520,18 @@ char* startExplorer() {
             previousSelection = -1;  // Обновляем предыдущее выделение
             drawDirectory();  // Перерисовываем интерфейс
         } else if (c == KEY_CTRL_Q) {
-            return NULL;  // Возвращаем NULL при выходе без выбора файла
+			saveCurrentPath(); // Сохраняем текущий путь при выходе
+            break;
         } else if (c == KEY_CTRL_F) {
-            // Вызов функции создания файла
             system("cls");
             createFile(); 
         } else if (c == KEY_CTRL_C) {
-            // Вызов функции копирования каталога
             system("cls");
             createDirectory();  
         } else if (c == KEY_CTRL_D) {
-            // Вызов функции удаления с подтверждением
             system("cls");
             confirmDelete(entries[currentSelection].name);
-        } else if (c == KEY_CTRL_R) {
-            // Открытие интерфейса работы с командной строкой
-            // TODO: Реализовать функциональность
-            // Открытие интерфейса работы с cmd
-            // TODO: Implement cmd interface
-            // system("cls");
-            //handleCtrlR();  // Обрабатываем Ctrl + R
-            // ОТключен ведь сломан, плюс нет смысла пока.
         }
-
     }
 
     setCursorVisibility(1);  // Показываем курсор при выходе

@@ -17,7 +17,7 @@
 #define MAX_CLIPBOARD_SIZE 10000
 #define MAX_FILE_SIZE 1024 * 1024  // (1 MB)
 
-#define VERSION "1.3.6"
+#define VERSION "1.3.7"
 
 char** lines;
 int num_lines = 0;
@@ -42,6 +42,7 @@ CONSOLE_SCREEN_BUFFER_INFO csbi;
 HHOOK mouseHook;
 
 const bool DEBUG = true;
+const bool debugMouse = false;
 FILE* file = NULL;
 
 void load_file(const char* filename);
@@ -503,8 +504,10 @@ LRESULT CALLBACK MouseHookProc(int nCode, WPARAM wParam, LPARAM lParam) {
         int y = mouseInfo->pt.y;
 
         char msg[50] = {'\0'};
-        sprintf(msg, "Mouse moved to: (%d, %d)", x, y);
-        log_message(LOG_INFO, msg);
+		if (debugMouse) {
+			sprintf(msg, "Mouse moved to: (%d, %d)", x, y);
+			log_message(LOG_INFO, msg);
+		}
     }
     return CallNextHookEx(mouseHook, nCode, wParam, lParam);
 }
@@ -608,6 +611,16 @@ void handle_new_file(char* new_file) {
     } else {
         printf("No file selected. Reopening previous file: %s\n", current_file);
         load_file(current_file); 
+    }
+}
+
+// Функция для удаления сохраненного файла конфигурации
+void deleteSavedPath() {
+    // Удаляем файл конфигурации
+    if (remove(".clite_saved_path.txt") == 0) {
+        log_message(LOG_INFO, "Файл .clite_saved_path.txt успешно удалён.");
+    } else {
+        log_message(LOG_ERROR, "Ошибка при удалении файла .clite_saved_path.txt!");
     }
 }
 
@@ -894,6 +907,8 @@ int main(int argc, char* argv[]) {
     clear_console(); 
 
     cleanup_lines(); 
+	
+	deleteSavedPath();
 
     return 0;
 }

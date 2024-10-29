@@ -28,7 +28,10 @@ extern FileEntry entries[256];
 extern int totalEntries;
 extern int currentSelection;
 extern char currentPath[MAX_PATH];
+extern char savedPath[MAX_PATH]; // Глобальная переменная для сохранения пути
 
+void loadSavedPath();            // Функция для загрузки сохраненного пути
+void saveCurrentPath();          // Функция для сохранения текущего пути
 void setCursorVisibility(int visible);
 void setConsoleColor(int color);
 void moveCursor(int x, int y);
