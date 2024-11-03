@@ -70,7 +70,8 @@ void add_syntax_rules_c_and_cpp() {
         "strcpy", "strncpy", "strcat", "strncat", "strcmp", "strncmp", "strchr", "strrchr", 
         "strstr", "memcpy", "memmove", "memcmp", "memset", "isdigit", "isalpha", "islower", 
         "isupper", "tolower", "toupper", "sin", "cos", "tan", "sqrt", "pow", "log", 
-        "exp",
+        "exp", "getchar", "putchar", "getch", "getche", "puts", "fputs", "ferror", "gets", 
+        "getc", 
 
         // C++ стандартные функции с пространствами имен
         // std::cout, std::cin и т.д.

@@ -558,5 +558,6 @@ char* startExplorer() {
     }
 
     setCursorVisibility(1);  // Показываем курсор при выходе
+	system("cls");
     return NULL;  // Возвращаем NULL при выходе без выбора файла
 }

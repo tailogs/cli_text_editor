@@ -10,7 +10,7 @@ typedef enum {
 } LogLevel;
 
 // Функция для инициализации логирования
-void init_logging(int enable);
+void init_logging(int enable, char *path_temp);
 
 // Функция для записи сообщения в лог
 void log_message(LogLevel level, const char *message, ...);

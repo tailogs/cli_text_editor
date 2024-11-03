@@ -4,6 +4,7 @@
 #include <conio.h>
 #include <windows.h>
 #include <locale.h>
+#include <wchar.h>
 #include <stdbool.h>
 #include "syntax.h"
 #include "console_utils.h"
@@ -36,6 +37,9 @@ char current_file[MAX_PATH] = "";
 char* file_buffer = NULL;  
 bool fileCreatedByProgram = false; // флаг для отслеживания создания файла
 bool textEntered = false; // флаг для проверки ввода текста
+int steps = 1;
+int stepsBoolCtrlShift = false;
+int stepsBoolCtrl = false;
 
 HANDLE hConsole;
 COORD cursorPosition;
@@ -47,7 +51,20 @@ const bool DEBUG = true;
 const bool debugMouse = false;
 FILE* file = NULL;
 
+#define LINES_STEP_CTRL 10
+#define LINES_STEP_CTRL_SHIFT 100
+
 void load_file(const char* filename);
+
+// Функция проверки нажатия Ctrl
+bool isCtrlPressed() {
+    return GetAsyncKeyState(VK_CONTROL) & 0x8000;
+}
+
+// Функция проверки нажатия Shift
+bool isShiftPressed() {
+    return GetAsyncKeyState(VK_SHIFT) & 0x8000;
+}
 
 void init_console() {
     hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -626,10 +643,28 @@ void deleteSavedPath() {
     }
 }
 
+void removeWord(char *buffer, const char *word) {
+    char *pos;
+    int wordLen = strlen(word);
+    int index = 0;
+
+    // Проходим по буферу
+    while ((pos = strstr(buffer + index, word)) != NULL) {
+        // Копируем часть до найденного слова
+        memmove(buffer + index, buffer + index, pos - (buffer + index));
+        // Обновляем индекс
+        index += pos - (buffer + index);
+        // Пропускаем слово
+        index += wordLen;
+        // Сдвигаем оставшуюся часть строки
+        memmove(buffer + index - wordLen, pos + wordLen, strlen(pos + wordLen) + 1);
+    }
+}
+
 int main(int argc, char* argv[]) {
-    setlocale(LC_ALL, "");
-    SetConsoleOutputCP(1251);
-    SetConsoleCP(1251);
+    setlocale(LC_ALL, "en_US.UTF-8");
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
     DWORD mode;
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     HANDLE hConsoleInput = GetStdHandle(STD_INPUT_HANDLE);
@@ -642,7 +677,11 @@ int main(int argc, char* argv[]) {
 
     InitMouseHook();
 
-    init_logging(DEBUG);
+    char buffer[MAX_PATH];
+    GetModuleFileName(NULL, buffer, sizeof(buffer) / sizeof(buffer[0]));
+    removeWord(buffer, "\\clite.exe");
+    printf("Filepath: %s\n", buffer);
+    init_logging(DEBUG, buffer);
 
     if (argc > 1) {
         if (strcmp(argv[1], "-v") == 0 || strcmp(argv[1], "--v") == 0 ||
@@ -821,29 +860,50 @@ int main(int argc, char* argv[]) {
     while (true) {
         ReadConsoleInput(hConsole, &inputRecord, 1, &events);
 
-        log_message(LOG_INFO, "START CICLE");
+        // Обработка специальных символов
+        if (isCtrlPressed() && isShiftPressed()) {
+            steps = (steps == LINES_STEP_CTRL_SHIFT) ? 1 : LINES_STEP_CTRL_SHIFT;
+            log_message(LOG_INFO, "ctrl+shift: step mouse lines: %d", steps);
+        } else if (isCtrlPressed()) {
+            steps = (steps == LINES_STEP_CTRL) ? 1 : LINES_STEP_CTRL;
+            log_message(LOG_INFO, "ctrl: step mouse lines: %d", steps);
+        }
 
         int c = _getch();
+
         if ((c == 0 || c == 224) && _kbhit()) {
-            c = _getch();
+            c = _getch(); // Получаем код клавиши
+            bool updated = false;
+
+            // Обычное перемещение на 1 строку
+            if (c == 72) { // Стрелка вверх
+                if (current_line > 0) {
+                    current_line -= steps; // Перемещение вверх на заданное количество строк
+                    updated = true;
+                }
+            } else if (c == 80) { // Стрелка вниз
+                if (current_line < num_lines - 1) {
+                    current_line += steps; // Перемещение вниз на заданное количество строк
+                    updated = true;
+                }
+            }
+
+            // Переключение режима шага с использованием Page Up и Page Down
+            if (c == 73) { // Page Up
+                steps = (steps == LINES_STEP_CTRL_SHIFT) ? 1 : LINES_STEP_CTRL_SHIFT;
+                log_message(LOG_INFO, "Page Up: step mouse lines: %d", steps);
+            } else if (c == 81) { // Page Down
+                steps = (steps == LINES_STEP_CTRL) ? 1 : LINES_STEP_CTRL;
+                log_message(LOG_INFO, "Page Down: step mouse lines: %d", steps);
+            }
+
+            if (updated) {
+                update_cursor_position(); // Обновление позиции курсора
+                fill_console_buffer(); // Перерисовка консоли
+            }
+
             switch (c) {
-                case 72: 
-                    if (current_line > top_line) {
-                        current_line--;
-                        current_col = MIN(current_col, strlen(lines[current_line]));
-                        fill_console_buffer();
-                        update_cursor_position();
-                    }
-                    break;
-                case 80:
-                    if (current_line < num_lines - 1) {
-                        current_line++;
-                        current_col = MIN(current_col, strlen(lines[current_line]));
-                        fill_console_buffer();
-                        update_cursor_position();
-                    }
-                    break;
-                case 75:
+                case 75:  // стрелка влево
                     if (current_col > 0) {
                         current_col--;
                         fill_console_buffer();
@@ -855,7 +915,8 @@ int main(int argc, char* argv[]) {
                         update_cursor_position();
                     }
                     break;
-                case 77:
+
+                case 77:  // стрелка вправо
                     if (current_col < strlen(lines[current_line])) {
                         current_col++;
                         fill_console_buffer();
@@ -867,13 +928,17 @@ int main(int argc, char* argv[]) {
                         update_cursor_position();
                     }
                     break;
-                case 83:
+
+                case 83:  // Delete
                     delete_after_cursor();
                     break;
             }
-        } else if (c == '{' || c == '[' || c == '(') {
+        } else if (c == '{' || c == '[' || c == '(' || c == '"' || c == '\'') {
             insert_char(c);
-            insert_char(c == '{' ? '}' : (c == '[' ? ']' : ')'));
+            insert_char(c == '{' ? '}' : 
+                    c == '[' ? ']' : 
+                    c == '(' ? ')' : 
+                    c);
             current_col--;
         } else if (c == 13) { // Enter
             new_line();
