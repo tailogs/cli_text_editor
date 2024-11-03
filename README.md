@@ -42,6 +42,10 @@ To build the project, you need to have [GCC](https://gcc.gnu.org/) and [MinGW](h
    - Press `Enter` to add a new line.
    - Press `Backspace` to delete a character.
    - Press `Tab` to insert a tab.
+   - Enhanced Navigation:
+      - Press Ctrl + Arrow Keys (Up, Down) to move by 10 characters at a time.
+      - Press Ctrl + Shift + Arrow Keys (Up, Down) to move by 100 lines at a time.
+      - Pressing these combinations again will revert to moving one line at a time.
 
 3. **Copying text to the clipboard**:
    - When on the desired line, press `Ctrl+C` to copy the line's text (line numbers are also copied for now).
@@ -147,20 +151,6 @@ To add your language support you need to open files `syntax.c`, `syntax.h`, and 
 	This simply adds an extension check in function strcmp as its second argument while calling your previously created function inside that if block.
 
 8. Compile the program and test syntax highlighting by creating a file with your language's extension and entering any code into it.
-
-### Version Changes
-- **v1.0**:   Initial version with all basic functionality ready.
-- **v1.1**:   Added more supported programming languages; separated code into files; improved color highlighting functionality.
-- **v1.1.1**: Fixed cursor not appearing upon exiting program version.
-- **v1.1.2**: Fixed tab display issue in version output.
-- **v1.1.3**: Corrected all warnings displayed by compiler in version output.
-- **v1.1.4**: Changed file encoding to Windows 1251; fixed display of Russian characters.
-- **v1.1.5**: Fixed compiler warning issue.
-- **v1.1.6**: Expanded list of keywords, functions, and headers for C and C++ languages.
-- **v1.2**:   Improved character coloring in console along with cursor visibility.
-- **v1.2.3**: Now spaces in Makefile (and other files) can be replaced with tabs using command: clite <filename> --repair
-- **v1.3.4**: Added an explorer that makes navigating project directories easier.
-- **v1.3.7**: Speeded up the opening of the conductor. I saved the current path. Added the "debugMouse" variable to reduce the weight of the "logfile.log" file.
 
 ### License
 
