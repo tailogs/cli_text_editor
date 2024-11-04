@@ -18,7 +18,7 @@
 #define MAX_CLIPBOARD_SIZE 10000
 #define MAX_FILE_SIZE 1024 * 1024  // (1 MB)
 
-#define VERSION "1.4.0"
+#define VERSION "1.4.1"
 
 char** lines;
 int num_lines = 0;
@@ -302,8 +302,11 @@ void fill_console_buffer() {
             buffer[i * screen_width + start_col + j].Char.AsciiChar = line_num_str[j];
             buffer[i * screen_width + start_col + j].Attributes = 15; // White text
         }
+        // Добавляем символ '|'
+        buffer[i * screen_width + start_col + strlen(line_num_str) + 2].Char.AsciiChar = '|';
+        buffer[i * screen_width + start_col + strlen(line_num_str) + 2].Attributes = 15; // White text
 
-        start_col += strlen(line_num_str) + 3; // Space for number and additional padding
+        start_col += strlen(line_num_str) + 3; // Space for number and '|'
 
         // Apply syntax highlighting to line text (excluding line numbers)
         apply_syntax_highlighting(lines[i], buffer, i, start_col, syntax_rules, syntax_rules_count);
@@ -674,7 +677,12 @@ void moveToLine(int lineNumber) {
         update_cursor_position();
         fill_console_buffer();
     } else {
-        printf("Номер строки вне диапазона: %d\n", lineNumber);
+        wchar_t text[50];
+        // Очистка строки
+        wmemset(text, L' ', sizeof(text) / sizeof(wchar_t)); // Заполнение пробелами
+        // Форматирование строки
+        swprintf(text, sizeof(text) / sizeof(wchar_t), L"Номер строки вне диапазона: %d", lineNumber);
+        centerText(text, TXT_RED, BACK_BLACK);  
         Sleep(1000);
         update_cursor_position(); // Обновление позиции курсора
         fill_console_buffer(); // Перерисовка консоли
@@ -737,6 +745,14 @@ int main(int argc, char* argv[]) {
             printf("            | Create a directory\n");
             printf("        Ctrl+D (in explorer)\n");
             printf("            | Delete a file or directory\n");
+            printf("    | ENHANCED NAVIGATION:\n");
+            printf("        Ctrl + Arrow Keys (Up, Down)\n");
+            printf("            | Move by 10 characters at a time.\n");
+            printf("        Ctrl + Shift + Arrow Keys (Up, Down)\n");
+            printf("            | Move by 100 lines at a time.\n");
+            printf("            | Pressing these combinations again reverts to moving one line at a time.\n");
+            printf("        Ctrl + L\n");
+            printf("            | Prompt for a line number and move the cursor directly to it if within range.\n");
             printf(CMD_RESET_COLOR);
             return 0;
         }
@@ -984,7 +1000,8 @@ int main(int argc, char* argv[]) {
             if (sscanf(input, "%d", &lineNumber) == 1) { // Преобразование строки в число
                 moveToLine(lineNumber - 1);
             } else {
-                printf("Неверный ввод. Пожалуйста, введите число.\n");
+                wchar_t text[] = L"Неверный ввод. Пожалуйста, введите число.";
+                centerText(text, TXT_RED, BACK_BLACK);  
                 Sleep(1000);
                 update_cursor_position(); // Обновление позиции курсора
                 fill_console_buffer(); // Перерисовка консоли

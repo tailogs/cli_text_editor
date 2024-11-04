@@ -10,6 +10,8 @@
 #include <conio.h>
 #include "syntax.h"
 
+#define CMD_RESET_COLOR "\033[0m"
+
 // Устанавливает символ в указанную позицию на экране
 void setPixel(int x, int y, wchar_t symbol, const char* text_color, const char* background_color);
 
