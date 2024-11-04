@@ -46,6 +46,7 @@ To build the project, you need to have [GCC](https://gcc.gnu.org/) and [MinGW](h
       - Press Ctrl + Arrow Keys (Up, Down) to move by 10 characters at a time.
       - Press Ctrl + Shift + Arrow Keys (Up, Down) to move by 100 lines at a time.
       - Pressing these combinations again will revert to moving one line at a time.
+	Ctrl + L: Prompts for a line number and moves the cursor directly to that line if within range.
 
 3. **Copying text to the clipboard**:
    - When on the desired line, press `Ctrl+C` to copy the line's text (line numbers are also copied for now).

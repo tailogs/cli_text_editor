@@ -18,7 +18,7 @@
 #define MAX_CLIPBOARD_SIZE 10000
 #define MAX_FILE_SIZE 1024 * 1024  // (1 MB)
 
-#define VERSION "1.3.9"
+#define VERSION "1.4.0"
 
 char** lines;
 int num_lines = 0;
@@ -64,6 +64,12 @@ bool isCtrlPressed() {
 // Функция проверки нажатия Shift
 bool isShiftPressed() {
     return GetAsyncKeyState(VK_SHIFT) & 0x8000;
+}
+
+// Функция проверки состояние клавиши NumLock
+bool isNumLockOn() {
+    // Проверяем состояние клавиши NumLock
+    return (GetKeyState(VK_NUMLOCK) & 1) != 0;
 }
 
 void init_console() {
@@ -661,6 +667,20 @@ void removeWord(char *buffer, const char *word) {
     }
 }
 
+void moveToLine(int lineNumber) {
+    if (lineNumber >= 0 && lineNumber < num_lines) {
+        current_line = lineNumber;
+        current_col = 0; // Сброс колонки на начало строки
+        update_cursor_position();
+        fill_console_buffer();
+    } else {
+        printf("Номер строки вне диапазона: %d\n", lineNumber);
+        Sleep(1000);
+        update_cursor_position(); // Обновление позиции курсора
+        fill_console_buffer(); // Перерисовка консоли
+    }
+}
+
 int main(int argc, char* argv[]) {
     setlocale(LC_ALL, "en_US.UTF-8");
     SetConsoleOutputCP(CP_UTF8);
@@ -954,6 +974,21 @@ int main(int argc, char* argv[]) {
             newFile = startExplorer();
             log_message(LOG_INFO, newFile);
             break;
+        } else if (c == 12) { // Ctrl+L
+            system("cls");
+            printf("Введите номер строки для перемещения: ");
+            char input[10];
+            fgets(input, sizeof(input), stdin); // Чтение ввода пользователя
+
+            int lineNumber;
+            if (sscanf(input, "%d", &lineNumber) == 1) { // Преобразование строки в число
+                moveToLine(lineNumber - 1);
+            } else {
+                printf("Неверный ввод. Пожалуйста, введите число.\n");
+                Sleep(1000);
+                update_cursor_position(); // Обновление позиции курсора
+                fill_console_buffer(); // Перерисовка консоли
+            }
         } else { 
             textEntered = true; // если введен хотя бы один символ, флаг устанавливается
             insert_char(c);
