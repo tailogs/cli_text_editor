@@ -18,7 +18,7 @@
 #define MAX_CLIPBOARD_SIZE 10000
 #define MAX_FILE_SIZE 1024 * 1024  // (1 MB)
 
-#define VERSION "1.4.1"
+#define VERSION "1.4.2"
 
 char** lines;
 int num_lines = 0;
@@ -382,8 +382,15 @@ void copy_line_without_number() {
 }
 
 void update_cursor_position() {
-    // Update console cursor position (not visible in this case, just for consistency)
-    set_cursor_position(current_col + max_line_number_length + 3, current_line - top_line);
+    size_t line_length = strlen(lines[current_line]);
+
+    if (current_col > line_length) {
+        // Ограничиваем колонку длиной строки
+        current_col = line_length;
+    }
+    
+    // Обновление позиции курсора в консоли
+    SetConsoleCursorPosition(hConsole, (COORD){.X = current_col, .Y = current_line});
 }
 
 void insert_char(char c) {

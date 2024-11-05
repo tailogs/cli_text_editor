@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -std=c99 -Wall -Wextra -lShlwapi
+CFLAGS = -std=c18 -Wall -Wextra -lShlwapi
 OBJ = main.o resource.o syntax.o console_utils.o logger.o explorer.o
 OUT = clite.exe
 
