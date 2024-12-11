@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/8d3a2710-b417-45fe-b949-87e6797fcd64)
+![image](https://github.com/user-attachments/assets/01c69f22-0f10-445a-a72d-6a459a5f391c)
 <br>Figure 1. Image of an open program
 
 CLITE (CLI TEXT EDITOR) is a simple text editor for Windows with a graphical interface. It supports editing text files with syntax highlighting and various editing operations, including copying text to the clipboard.
