@@ -59,7 +59,7 @@ void add_syntax_rules_c_and_cpp() {
         "HHOOK", "DWORD", "WORD", "BYTE", "BOOL", "LPVOID", "LPCSTR", "LPCWSTR", 
         "LPWSTR", "LRESULT", "WPARAM", "LPARAM", "CHAR_INFO", "LC_ALL", "FILE", "SyntaxRule",
         "uint8_t", "uint16_t", "uint32_t", "uint64_t", "int8_t", "int16_t", "int32_t", "int64_t",
-        "intmax_t", "uintmax_t", "intptr_t", "uintptr_t"
+        "intmax_t", "uintmax_t", "intptr_t", "uintptr_t", "SIGINT", "EOF", "argv", "argc"
     };
     
     const char* functions[] = {
@@ -71,7 +71,8 @@ void add_syntax_rules_c_and_cpp() {
         "strstr", "memcpy", "memmove", "memcmp", "memset", "isdigit", "isalpha", "islower", 
         "isupper", "tolower", "toupper", "sin", "cos", "tan", "sqrt", "pow", "log", 
         "exp", "getchar", "putchar", "getch", "getche", "puts", "fputs", "ferror", "gets", 
-        "getc", 
+        "getc", "Sleep", "system", "_getch", "_kbhit", "fputc", "fgetc", "perror", "snprintf",
+        "wprintf", "sleep",
 
         // C++ стандартные функции с пространствами имен
         // std::cout, std::cin и т.д.
@@ -80,7 +81,7 @@ void add_syntax_rules_c_and_cpp() {
         "std::vector", "std::map", "std::set", "std::list", "std::sort", "std::find",
         "std::thread", "std::mutex", "std::lock_guard", "std::unique_lock", "std::async", 
         "std::promise", "std::future", "std::atomic", "std::shared_ptr", "std::weak_ptr", 
-        "std::make_shared", "std::make_unique", 
+        "std::make_shared", "std::make_unique", "std::signal", "std::endl",
 
         // Упрощенные варианты
         "cout", "cin", "cerr", "clog", 
@@ -88,7 +89,7 @@ void add_syntax_rules_c_and_cpp() {
         "vector", "map", "set", "list", "sort", "find",
         "thread", "mutex", "lock_guard", "unique_lock", "async", 
         "promise", "future", "atomic", "shared_ptr", "weak_ptr", 
-        "make_shared", "make_unique",
+        "make_shared", "make_unique", "signal", "endl",
 
         // std::chrono и другие
         "std::chrono::steady_clock", "chrono::steady_clock", "steady_clock",
@@ -188,7 +189,9 @@ void add_syntax_rules_c_and_cpp() {
         "<numbers>",             // Числовые функции
         "<format>",              // Форматирование строк
         "<ranges>",              // Диапазоны
-        "<concepts>"             // Концепции
+        "<concepts>",            // Концепции
+        "<string>",
+        "<csignal>"
     };
     
     const char* include__[] = { "#include" };

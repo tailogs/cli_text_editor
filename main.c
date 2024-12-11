@@ -18,7 +18,7 @@
 #define MAX_CLIPBOARD_SIZE 10000
 #define MAX_FILE_SIZE 1024 * 1024  // (1 MB)
 
-#define VERSION "1.4.2"
+#define VERSION "1.4.3"
 
 char** lines;
 int num_lines = 0;
@@ -653,9 +653,9 @@ void handle_new_file(char* new_file) {
 void deleteSavedPath() {
     // Удаляем файл конфигурации
     if (remove(".clite_saved_path.txt") == 0) {
-        log_message(LOG_INFO, "Файл .clite_saved_path.txt успешно удалён.");
+        log_message(LOG_INFO, "File .clite_saved_path.txt successfully deleted.");
     } else {
-        log_message(LOG_ERROR, "Ошибка при удалении файла .clite_saved_path.txt!");
+        log_message(LOG_ERROR, "Error deleting file .clite_saved_path.txt!");
     }
 }
 
@@ -697,9 +697,9 @@ void moveToLine(int lineNumber) {
 }
 
 int main(int argc, char* argv[]) {
-    setlocale(LC_ALL, "en_US.UTF-8");
-    SetConsoleOutputCP(CP_UTF8);
+	SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
+	setlocale(LC_ALL, "");
     DWORD mode;
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     HANDLE hConsoleInput = GetStdHandle(STD_INPUT_HANDLE);
@@ -991,7 +991,7 @@ int main(int argc, char* argv[]) {
             insert_tab();
         } else if (c == 19) { // Ctrl+S
             save_file(argv[1]);
-        } else if (c == 17) { // Ctrl+Q
+        } else if (c == 17 || c == 24) { // Ctrl+Q или Ctrl+X
             break;
         } else if (c == 5) { // Ctrl+E
             newFile = startExplorer();
@@ -999,7 +999,7 @@ int main(int argc, char* argv[]) {
             break;
         } else if (c == 12) { // Ctrl+L
             system("cls");
-            printf("Введите номер строки для перемещения: ");
+            wprintf(L"Enter the line number to move: ");
             char input[10];
             fgets(input, sizeof(input), stdin); // Чтение ввода пользователя
 
@@ -1007,7 +1007,7 @@ int main(int argc, char* argv[]) {
             if (sscanf(input, "%d", &lineNumber) == 1) { // Преобразование строки в число
                 moveToLine(lineNumber - 1);
             } else {
-                wchar_t text[] = L"Неверный ввод. Пожалуйста, введите число.";
+                wchar_t text[] = L"Invalid input. Please enter a number.";
                 centerText(text, TXT_RED, BACK_BLACK);  
                 Sleep(1000);
                 update_cursor_position(); // Обновление позиции курсора
@@ -1032,9 +1032,9 @@ int main(int argc, char* argv[]) {
 	// Удаляем файл, если он пуст и был создан программой
     if (fileCreatedByProgram && !textEntered) {
         if (remove(filename) == 0) {
-            printf("Файл удален, так как он пуст и был создан программой.\n");
+            printf("The file was deleted because it was empty and a program was created.\n");
         } else {
-            perror("Ошибка при удалении файла");
+            perror("Error deleting file");
         }
     }
 
